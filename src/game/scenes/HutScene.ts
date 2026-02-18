@@ -10,7 +10,7 @@ import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { economySchema } from '../systems/merge/schema';
 import { computeBonuses } from '../systems/meta/bonuses';
-import { applyUpgradeCost, getEconomyTuning } from '../systems/economy/EconomyTuning';
+import { getEconomyTuning, getTunedUpgradeCost } from '../systems/economy/EconomyTuning';
 import type { EconomyConfig, SaveState } from '../systems/merge/types';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import type {
@@ -121,8 +121,7 @@ export class HutScene extends Phaser.Scene {
     questPanel.render(this.questEngine.snapshot());
     const tunedUpgrades = this.upgrades.map((upgrade) => ({
       ...upgrade,
-      costGold: applyUpgradeCost(upgrade.costGold, this.tuning),
-      costDust: applyUpgradeCost(upgrade.costDust, this.tuning),
+      ...getTunedUpgradeCost(upgrade.costGold, upgrade.costDust, this.tuning),
     }));
     upgradesPanel.render(tunedUpgrades, this.meta.purchasedUpgradeIds);
 
@@ -206,8 +205,13 @@ export class HutScene extends Phaser.Scene {
       this.showToast(localizationManager.t('hut.alreadyBought'));
       return;
     }
-    const tunedCostGold = applyUpgradeCost(upgrade.costGold, this.tuning);
-    const tunedCostDust = applyUpgradeCost(upgrade.costDust, this.tuning);
+    const tunedCost = getTunedUpgradeCost(
+      upgrade.costGold,
+      upgrade.costDust,
+      this.tuning,
+    );
+    const tunedCostGold = tunedCost.gold;
+    const tunedCostDust = tunedCost.dust;
     if (this.saveState.gold < tunedCostGold || this.saveState.dust < tunedCostDust) {
       this.showToast(localizationManager.t('hut.notEnough'));
       return;

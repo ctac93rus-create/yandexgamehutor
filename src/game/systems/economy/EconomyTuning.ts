@@ -103,3 +103,19 @@ export function applyDustAmount(base: number, tuning: EconomyTuning): number {
 export function applyUpgradeCost(base: number, tuning: EconomyTuning): number {
   return Math.max(0, Math.round(base * tuning.hutUpgradeCostMultiplier));
 }
+
+export interface TunedUpgradeCost {
+  gold: number;
+  dust: number;
+}
+
+export function getTunedUpgradeCost(
+  costGold: number,
+  costDust: number,
+  tuning: EconomyTuning,
+): TunedUpgradeCost {
+  return {
+    gold: applyUpgradeCost(costGold, tuning),
+    dust: applyUpgradeCost(costDust, tuning),
+  };
+}

@@ -121,6 +121,49 @@ describe('SaveManager cloud/local conflict resolution', () => {
     expect(localStorage.getItem(SAVE_KEY)).toBe(JSON.stringify(cloudState));
   });
 
+
+  it('keeps optional meta.liveops fields when loading from cloud and syncing local', async () => {
+    const cloudState: SaveState = {
+      ...baseState,
+      updatedAt: 101,
+      meta: {
+        unlockedFlags: [],
+        purchasedUpgradeIds: [],
+        stats: {
+          merges: 0,
+          generatorSpawns: 0,
+          raidsCompleted: 0,
+          raidWins: 0,
+          hutUpgrades: 0,
+          bestRaidKills: 0,
+        },
+        quests: {
+          activeStoryQuestIds: [],
+          storyCompletedIds: [],
+          storyStepProgress: {},
+          claimedStoryRewardIds: [],
+          activeDailyQuestIds: [],
+          dailyCompletedIds: [],
+          dailyClaimedIds: [],
+          dailyProgress: {},
+          dailyLastRefreshDay: '2026-01-01',
+          unlockedChapters: [],
+        },
+        liveops: {
+          raidRewardDayKey: '2026-01-02',
+          raidRewardsClaimedToday: 3,
+        },
+      },
+    };
+    const manager = createManager({ [SAVE_KEY]: cloudState });
+
+    const loaded = await manager.load();
+
+    expect(loaded).toEqual(cloudState);
+    const localSynced = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null') as SaveState | null;
+    expect(localSynced?.meta?.liveops).toEqual(cloudState.meta?.liveops);
+  });
+
   it('stamps updatedAt during save', async () => {
     const manager = createManager({});
     const now = vi.spyOn(Date, 'now').mockReturnValue(123456);
