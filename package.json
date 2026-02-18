@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "zip": "tsx scripts/zip_dist.ts"
@@ -28,6 +28,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^6.2.0",
-    "vitest": "^3.0.8"
+    "vitest": "^3.0.8",
+    "eslint-import-resolver-typescript": "^3.6.3"
   }
 }

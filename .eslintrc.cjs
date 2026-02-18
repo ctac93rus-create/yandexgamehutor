@@ -8,6 +8,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
+    project: ['./tsconfig.json'],
+    tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint', 'import', 'prettier'],
   extends: [
@@ -18,8 +20,13 @@ module.exports = {
     'plugin:prettier/recommended',
     'prettier',
   ],
+  settings: {
+    'import/resolver': {
+      typescript: { project: './tsconfig.json' },
+    },
+  },
   rules: {
-    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
     'import/order': [
       'error',
       {
