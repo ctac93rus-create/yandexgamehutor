@@ -8,6 +8,7 @@ import { purchasesManager } from '../managers/PurchasesManager';
 import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
+import { sfxManager } from '../managers/SfxManager';
 import { economySchema } from '../systems/merge/schema';
 import { computeBonuses } from '../systems/meta/bonuses';
 import { getEconomyTuning, getTunedUpgradeCost } from '../systems/economy/EconomyTuning';
@@ -102,12 +103,14 @@ export class HutScene extends Phaser.Scene {
         const reward = this.questEngine.claimStoryReward(id);
         this.saveState.gold += reward.gold;
         this.saveState.dust += reward.dust;
+        sfxManager.playSuccess();
         void this.persist(localizationManager.t('hut.storyClaimed'));
       },
       onClaimDaily: (id) => {
         const reward = this.questEngine.claimDailyReward(id);
         this.saveState.gold += reward.gold;
         this.saveState.dust += reward.dust;
+        sfxManager.playSuccess();
         void this.persist(localizationManager.t('hut.dailyClaimed'));
       },
     });
@@ -134,19 +137,26 @@ export class HutScene extends Phaser.Scene {
     this.add
       .text(60, 678, localizationManager.t('common.toMerge'), navStyle)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('MergeScene'));
+      .on('pointerup', () => {
+        sfxManager.playClick();
+        this.scene.start('MergeScene');
+      });
     this.add
       .text(190, 678, localizationManager.t('common.toRaid'), navStyle)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () =>
+      .on('pointerup', () => {
+        sfxManager.playClick();
         this.scene.start('RaidScene', {
           bonuses: computeBonuses(this.meta, this.saveEconomy),
-        }),
-      );
+        });
+      });
     this.add
       .text(320, 678, localizationManager.t('common.backToMenu'), navStyle)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('MenuScene'));
+      .on('pointerup', () => {
+        sfxManager.playClick();
+        this.scene.start('MenuScene');
+      });
     this.add
       .text(470, 678, localizationManager.t('hut.booster'), {
         ...navStyle,
@@ -155,6 +165,7 @@ export class HutScene extends Phaser.Scene {
       })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
+        sfxManager.playClick();
         void adsManager.showRewarded('hut_booster', () => {
           void this.claimRewardedBooster();
         });
@@ -167,6 +178,7 @@ export class HutScene extends Phaser.Scene {
       })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
+        sfxManager.playClick();
         void this.buyGoldPack();
       });
 
@@ -177,6 +189,7 @@ export class HutScene extends Phaser.Scene {
     const flags = remoteConfigManager.getFlags();
     this.saveState.gold += flags.rewardedHutBoosterGold;
     this.saveState.dust += flags.rewardedHutBoosterDust;
+    sfxManager.playSuccess();
     await this.persist(
       `Rewarded: +${flags.rewardedHutBoosterGold} золота, +${flags.rewardedHutBoosterDust} пыли`,
     );
@@ -185,6 +198,7 @@ export class HutScene extends Phaser.Scene {
   private async buyGoldPack(): Promise<void> {
     const success = await purchasesManager.purchase('pack_gold_small');
     if (!success) {
+      sfxManager.playError();
       this.showToast(localizationManager.t('hut.purchaseUnavailable'));
       return;
     }
@@ -192,6 +206,7 @@ export class HutScene extends Phaser.Scene {
     if (latest) {
       this.saveState = latest;
     }
+    sfxManager.playSuccess();
     this.showToast(localizationManager.t('hut.purchaseApplied'));
     this.refreshHud();
   }
@@ -202,6 +217,7 @@ export class HutScene extends Phaser.Scene {
       return;
     }
     if (this.meta.purchasedUpgradeIds.includes(id)) {
+      sfxManager.playError();
       this.showToast(localizationManager.t('hut.alreadyBought'));
       return;
     }
@@ -213,6 +229,7 @@ export class HutScene extends Phaser.Scene {
     const tunedCostGold = tunedCost.gold;
     const tunedCostDust = tunedCost.dust;
     if (this.saveState.gold < tunedCostGold || this.saveState.dust < tunedCostDust) {
+      sfxManager.playError();
       this.showToast(localizationManager.t('hut.notEnough'));
       return;
     }
@@ -234,6 +251,7 @@ export class HutScene extends Phaser.Scene {
     }
 
     this.questEngine.onEvent('hut_upgrade', 1);
+    sfxManager.playSuccess();
     await this.persist(
       localizationManager.t('hut.upgradeBought', { title: upgrade.title }),
     );
