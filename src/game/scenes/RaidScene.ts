@@ -10,7 +10,13 @@ import { saveManager } from '../managers/SaveManager';
 import { achievementsManager } from '../managers/AchievementsManager';
 import { leaderboardsManager } from '../managers/LeaderboardsManager';
 import { localizationManager } from '../managers/LocalizationManager';
+import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { economySchema } from '../systems/merge/schema';
+import {
+  getEconomyTuning,
+  getLocalDayKey,
+  getRaidSoftCapMultiplier,
+} from '../systems/economy/EconomyTuning';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import { Defender } from '../systems/raid/Defender';
 import { Enemy } from '../systems/raid/Enemy';
@@ -58,6 +64,7 @@ export class RaidScene extends Phaser.Scene {
   private spellFx?: Phaser.GameObjects.Arc;
   private lastSpellFxAt = -1000;
   private bonuses: MetaBonuses = getDefaultBonuses();
+  private tuning = getEconomyTuning(remoteConfigManager.getFlags());
 
   public constructor() {
     super('RaidScene');
@@ -73,6 +80,7 @@ export class RaidScene extends Phaser.Scene {
     this.drawLanes();
 
     const economy = economySchema.parse(economyJson);
+    this.tuning = getEconomyTuning(remoteConfigManager.getFlags());
     this.rewardCalculator = new RewardCalculator(economy.raid);
 
     this.waves = Waves.parse(wavesJson);
@@ -158,7 +166,7 @@ export class RaidScene extends Phaser.Scene {
       this.enemies.length,
     );
     if (state !== 'running') {
-      this.finishRaid();
+      void this.finishRaid();
     }
   }
 
@@ -179,13 +187,24 @@ export class RaidScene extends Phaser.Scene {
     }
   }
 
-  private finishRaid(): void {
+  private async finishRaid(): Promise<void> {
     const result = this.controller.finalize(
       this.kills,
       this.baseHp,
       this.elapsedSec,
     );
-    const baseReward = this.rewardCalculator.calculate(result, false);
+    const save = await saveManager.load();
+    const meta = save?.meta ?? QuestEngine.defaultState();
+    const dayKey = getLocalDayKey();
+    const sameDay = meta.liveops?.raidRewardDayKey === dayKey;
+    const rewardsClaimedToday = sameDay ? (meta.liveops?.raidRewardsClaimedToday ?? 0) : 0;
+    const softCapMultiplier = getRaidSoftCapMultiplier(rewardsClaimedToday + 1, this.tuning);
+    const baseReward = this.rewardCalculator.calculate(
+      result,
+      false,
+      this.tuning.raidRewardMultiplier,
+      softCapMultiplier,
+    );
 
     new RewardModal(
       this,
@@ -208,9 +227,22 @@ export class RaidScene extends Phaser.Scene {
     doubled: boolean,
     result: RaidResult,
   ): Promise<void> {
-    const reward = this.rewardCalculator.calculate(result, doubled);
     const save = await saveManager.load();
     const meta = save?.meta ?? QuestEngine.defaultState();
+    const dayKey = getLocalDayKey();
+    meta.liveops = meta.liveops ?? { raidRewardDayKey: dayKey, raidRewardsClaimedToday: 0 };
+    if (meta.liveops.raidRewardDayKey !== dayKey) {
+      meta.liveops.raidRewardDayKey = dayKey;
+      meta.liveops.raidRewardsClaimedToday = 0;
+    }
+    const raidNumberToday = (meta.liveops.raidRewardsClaimedToday ?? 0) + 1;
+    const softCapMultiplier = getRaidSoftCapMultiplier(raidNumberToday, this.tuning);
+    const reward = this.rewardCalculator.calculate(
+      result,
+      doubled,
+      this.tuning.raidRewardMultiplier,
+      softCapMultiplier,
+    );
     const questEngine = new QuestEngine(meta, storyJson, dailyJson);
     questEngine.onEvent('raid_complete', 1);
     if (result.win) {
@@ -218,8 +250,12 @@ export class RaidScene extends Phaser.Scene {
     }
     const nextMeta = questEngine.getState();
     const previousBest = nextMeta.stats.bestRaidKills ?? 0;
-    const updatedBest = Math.max(previousBest, result.kills);
+    const raidScore = Math.max(0, Math.round(result.kills * this.tuning.raidScoreMultiplier));
+    const updatedBest = Math.max(previousBest, raidScore);
     nextMeta.stats.bestRaidKills = updatedBest;
+    nextMeta.liveops = nextMeta.liveops ?? { raidRewardDayKey: dayKey, raidRewardsClaimedToday: 0 };
+    nextMeta.liveops.raidRewardDayKey = dayKey;
+    nextMeta.liveops.raidRewardsClaimedToday = raidNumberToday;
     await achievementsManager.process(nextMeta);
 
     if (save) {
@@ -243,6 +279,7 @@ export class RaidScene extends Phaser.Scene {
       raidMeta: result,
     });
   }
+
 
   private playSpellFx(): void {
     const now = this.time.now;

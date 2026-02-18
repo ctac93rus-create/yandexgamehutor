@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdsManager } from '../src/game/managers/AdsManager';
 import { remoteConfigManager } from '../src/game/managers/RemoteConfigManager';
@@ -7,6 +7,12 @@ import { sdkManager } from '../src/game/managers/SDKManager';
 describe('AdsManager', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T10:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows interstitial only on configured frequency and only when ads are enabled', async () => {
@@ -16,10 +22,15 @@ describe('AdsManager', () => {
       disableAds: false,
       interstitialRaidEvery: 2,
       interstitialScreenEvery: 2,
+      adsInterstitialMinIntervalSec: 5,
     });
     const interstitialSpy = vi.spyOn(sdkManager, 'showFullscreenAdv').mockResolvedValue();
 
     await expect(manager.onRaidFinished()).resolves.toBe(false);
+    await expect(manager.onRaidFinished()).resolves.toBe(true);
+
+    await expect(manager.onRaidFinished()).resolves.toBe(false);
+    vi.advanceTimersByTime(6000);
     await expect(manager.onRaidFinished()).resolves.toBe(true);
 
     vi.spyOn(remoteConfigManager, 'getFlags').mockReturnValue({
@@ -27,18 +38,20 @@ describe('AdsManager', () => {
       disableAds: true,
       interstitialRaidEvery: 2,
       interstitialScreenEvery: 2,
+      adsInterstitialMinIntervalSec: 5,
     });
 
     await expect(manager.onRaidFinished()).resolves.toBe(false);
-    expect(interstitialSpy).toHaveBeenCalledTimes(1);
+    expect(interstitialSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('grants rewarded only from onRewarded callback', async () => {
+  it('grants rewarded only from onRewarded callback and respects cooldown', async () => {
     const manager = new AdsManager();
     vi.spyOn(remoteConfigManager, 'getFlags').mockReturnValue({
       ...remoteConfigManager.defaults,
       disableAds: false,
       allowRewardedWhenAdsDisabled: true,
+      rewardedCooldownSec: 30,
     });
 
     const rewardFn = vi.fn();
@@ -55,6 +68,9 @@ describe('AdsManager', () => {
     });
 
     await expect(manager.showRewarded('raid_double_reward', rewardFn)).resolves.toBe(true);
-    expect(rewardFn).toHaveBeenCalledTimes(1);
+    await expect(manager.showRewarded('raid_double_reward', rewardFn)).resolves.toBe(false);
+    vi.advanceTimersByTime(31000);
+    await expect(manager.showRewarded('raid_double_reward', rewardFn)).resolves.toBe(true);
+    expect(rewardFn).toHaveBeenCalledTimes(2);
   });
 });

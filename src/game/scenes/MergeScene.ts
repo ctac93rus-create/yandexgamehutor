@@ -23,6 +23,7 @@ import {
   mergeChainsSchema,
 } from '../systems/merge/schema';
 import { computeBonuses, getDefaultBonuses } from '../systems/meta/bonuses';
+import { applyDustAmount, getEconomyTuning } from '../systems/economy/EconomyTuning';
 import type {
   EconomyConfig,
   GeneratorConfig,
@@ -65,6 +66,7 @@ export class MergeScene extends Phaser.Scene {
   private inventory = new Inventory(this.grid);
   private overflowPolicy!: OverflowPolicy;
   private economy!: EconomyConfig;
+  private tuning = getEconomyTuning(remoteConfigManager.getFlags());
   private bonuses: MetaBonuses = getDefaultBonuses();
 
   private gold = 0;
@@ -142,6 +144,7 @@ export class MergeScene extends Phaser.Scene {
     const parsedItems = itemsSchema.parse(itemsJson);
     const parsedChains = mergeChainsSchema.parse(chainsJson);
     const parsedEconomy = economySchema.parse(economyJson) as EconomyConfig;
+    this.tuning = getEconomyTuning(remoteConfigManager.getFlags());
 
     this.itemsById = new Map(parsedItems.map((item) => [item.id, item]));
     this.mergeResolver = new MergeResolver(parsedChains);
@@ -292,7 +295,7 @@ export class MergeScene extends Phaser.Scene {
       const itemId = this.pendingRaidReward.itemIds[i];
       const free = this.inventory.placeToFreeCell(crypto.randomUUID());
       if (!free) {
-        this.dust += this.overflowPolicy.resolveNoSpace().grantedDust;
+        this.dust += applyDustAmount(this.overflowPolicy.resolveNoSpace().grantedDust, this.tuning);
         continue;
       }
       const runtimeId = this.grid.get(free);
@@ -444,10 +447,11 @@ export class MergeScene extends Phaser.Scene {
         const spawnTarget = this.inventory.placeToFreeCell(crypto.randomUUID());
         if (!spawnTarget) {
           const overflow = this.overflowPolicy.resolveNoSpace();
-          this.dust += overflow.grantedDust;
+          const rewardedDust = applyDustAmount(overflow.grantedDust, this.tuning);
+          this.dust += rewardedDust;
           this.showToast(
             localizationManager.t('merge.overflow', {
-              dust: overflow.grantedDust,
+              dust: rewardedDust,
             }),
           );
           this.refreshHud();
@@ -534,7 +538,7 @@ export class MergeScene extends Phaser.Scene {
     const free = this.grid.findFirstFreeCell();
     if (!free) {
       const overflow = this.overflowPolicy.resolveNoSpace();
-      this.dust += overflow.grantedDust;
+      this.dust += applyDustAmount(overflow.grantedDust, this.tuning);
       return false;
     }
     const runtimeId = crypto.randomUUID();
@@ -549,7 +553,7 @@ export class MergeScene extends Phaser.Scene {
       rechargeSeconds: Math.max(
         1,
         Math.round(
-          generator.rechargeSeconds * this.bonuses.merge.generatorRechargeMult,
+          generator.rechargeSeconds * this.bonuses.merge.generatorRechargeMult * this.tuning.generatorRechargeMultiplier,
         ),
       ),
       maxCharges: Math.max(
