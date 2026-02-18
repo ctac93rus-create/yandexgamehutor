@@ -1,0 +1,43 @@
+[
+  {
+    "id": "twig",
+    "name": "Ветка",
+    "tier": 1,
+    "chainId": "wood",
+    "spriteColor": 10053120,
+    "valueDust": 1,
+    "stackable": true
+  },
+  {
+    "id": "branch",
+    "name": "Ветвь",
+    "tier": 2,
+    "chainId": "wood",
+    "spriteColor": 6737151,
+    "valueDust": 2,
+    "stackable": true
+  },
+  {
+    "id": "log",
+    "name": "Бревно",
+    "tier": 3,
+    "chainId": "wood",
+    "spriteColor": 3381759,
+    "valueDust": 5,
+    "stackable": true
+  },
+  {
+    "id": "campfire",
+    "name": "Костёр",
+    "tier": 1,
+    "chainId": "generator",
+    "spriteColor": 16754944,
+    "valueDust": 10,
+    "stackable": false,
+    "generator": {
+      "producesItemId": "twig",
+      "maxCharges": 5,
+      "rechargeSeconds": 8
+    }
+  }
+]
