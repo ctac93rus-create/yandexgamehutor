@@ -6,6 +6,7 @@ import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { MergeScene } from './scenes/MergeScene';
 import { PreloadScene } from './scenes/PreloadScene';
+import { RaidScene } from './scenes/RaidScene';
 import { WipScene } from './scenes/WipScene';
 
 export class GameApp {
@@ -33,7 +34,7 @@ export class GameApp {
         MenuScene,
         MergeScene,
         new WipScene('HutScene', 'Хутор'),
-        new WipScene('RaidScene', 'Рейд'),
+        RaidScene,
         new WipScene('SettingsScene', 'Настройки'),
       ],
     });

@@ -1,5 +1,16 @@
 {
   "overflowDustPerItem": 2,
   "startGold": 100,
-  "startDust": 0
+  "startDust": 0,
+  "raid": {
+    "baseGold": 25,
+    "goldPerKill": 1,
+    "baseDust": 3,
+    "dustPerSurvivedHp": 1,
+    "rewardItems": [
+      "twig",
+      "twig",
+      "branch"
+    ]
+  }
 }

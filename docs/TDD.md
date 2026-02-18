@@ -25,11 +25,22 @@
 - `OverflowPolicy` гарантирует no-softlock (компенсация пылью при полном поле).
 - `Inventory` изолирует логику размещения в свободную клетку.
 
+## Raid architecture (Milestone 2)
+- `RaidScene` отвечает за спаун, update-loop, контроль конца рейда и переход в merge.
+- `Waves` парсит/валидирует `waves.json` и отдаёт курсор таймлайна без лишних аллокаций.
+- `Enemy` хранит HP, движение и эффекты (freeze).
+- `Defender` реализует автоатаку тотемов по ближайшей цели в диапазоне.
+- `Spells` держит кулдаун и массовый эффект (Freeze).
+- `RaidController` — state machine завершения рейда.
+- `RewardCalculator` считает награды по `economy.json`.
+- `RaidHUD` и `RewardModal` — UI-слой рейда.
+
 ## Сохранения
 - `SaveManager` сохраняет состояние доски, валюты и генераторов в localStorage.
 - Если доступен SDK player, состояние дублируется в `player.setData(...)`.
-- Автосейв вызывается после merge, спавна, overflow и при восстановлении зарядов генераторов.
+- Автосейв вызывается после merge, спавна, overflow, восстановления зарядов и выдачи рейд-наград.
 
 ## Решения и допущения
-- Валидация `items.json`, `merge_chains.json`, `economy.json` через `zod` в рантайме.
+- Валидация `items.json`, `merge_chains.json`, `economy.json`, `waves.json` через `zod` в рантайме.
 - Политика SDK-only сохранена: доступ к SDK только через `SDKManager`.
+- При rewarded в рейде удвоение выполняется через `showRewardedVideo` callback `onRewarded`.

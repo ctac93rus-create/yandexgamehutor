@@ -1,0 +1,27 @@
+{
+  "durationSec": 55,
+  "baseHp": 25,
+  "timeline": [
+    { "atSec": 1, "lane": 0, "enemyId": "rat" },
+    { "atSec": 2.5, "lane": 1, "enemyId": "rat" },
+    { "atSec": 4, "lane": 2, "enemyId": "rat" },
+    { "atSec": 8, "lane": 0, "enemyId": "boar" },
+    { "atSec": 9.5, "lane": 1, "enemyId": "rat" },
+    { "atSec": 11, "lane": 2, "enemyId": "boar" },
+    { "atSec": 15, "lane": 0, "enemyId": "shaman" },
+    { "atSec": 16, "lane": 1, "enemyId": "boar" },
+    { "atSec": 17, "lane": 2, "enemyId": "shaman" },
+    { "atSec": 23, "lane": 0, "enemyId": "boar" },
+    { "atSec": 24, "lane": 1, "enemyId": "boar" },
+    { "atSec": 25, "lane": 2, "enemyId": "boar" },
+    { "atSec": 31, "lane": 0, "enemyId": "shaman" },
+    { "atSec": 32.5, "lane": 1, "enemyId": "shaman" },
+    { "atSec": 34, "lane": 2, "enemyId": "shaman" },
+    { "atSec": 42, "lane": 0, "enemyId": "boar" },
+    { "atSec": 43, "lane": 1, "enemyId": "shaman" },
+    { "atSec": 44, "lane": 2, "enemyId": "boar" },
+    { "atSec": 49, "lane": 0, "enemyId": "rat" },
+    { "atSec": 50, "lane": 1, "enemyId": "rat" },
+    { "atSec": 51, "lane": 2, "enemyId": "rat" }
+  ]
+}

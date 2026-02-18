@@ -22,10 +22,19 @@ export const mergeChainSchema = z.object({
   tiers: z.array(z.string().min(1)).min(2),
 });
 
+export const raidEconomySchema = z.object({
+  baseGold: z.number().int().nonnegative(),
+  goldPerKill: z.number().int().nonnegative(),
+  baseDust: z.number().int().nonnegative(),
+  dustPerSurvivedHp: z.number().int().nonnegative(),
+  rewardItems: z.array(z.string().min(1)).min(1),
+});
+
 export const economySchema = z.object({
   overflowDustPerItem: z.number().int().nonnegative(),
   startGold: z.number().int().nonnegative(),
   startDust: z.number().int().nonnegative(),
+  raid: raidEconomySchema,
 });
 
 export const itemsSchema = z.array(itemDefinitionSchema).min(1);
