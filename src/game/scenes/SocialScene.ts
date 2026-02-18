@@ -6,6 +6,7 @@ import { saveManager } from '../managers/SaveManager';
 import { ACHIEVEMENTS, isAchievementUnlocked, unlockAchievements } from '../systems/meta/achievements';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import { sdkManager } from '../managers/SDKManager';
+import { sfxManager } from '../managers/SfxManager';
 
 interface SocialSceneData {
   tab?: 'leaderboard' | 'achievements';
@@ -39,7 +40,10 @@ export class SocialScene extends Phaser.Scene {
       this.activeTab = 'achievements';
       void this.renderActiveTab();
     }, 260);
-    this.makeButton(1100, 120, localizationManager.t('common.backToMenu'), () => this.scene.start('MenuScene'), 220);
+    this.makeButton(1100, 120, localizationManager.t('common.backToMenu'), () => {
+      sfxManager.playClick();
+      this.scene.start('MenuScene');
+    }, 220);
 
     this.statusText = this.add.text(50, 170, '', { color: '#94a3b8', fontSize: '24px' });
     this.content = this.add.container(0, 0);
@@ -106,6 +110,7 @@ export class SocialScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     const refreshLabel = this.add.text(1040, 220, localizationManager.t('social.refresh'), { color: '#ecfeff', fontSize: '22px' }).setOrigin(0.5);
     refreshButton.on('pointerup', () => {
+      sfxManager.playClick();
       void this.renderActiveTab();
     });
     this.content.add([refreshButton, refreshLabel]);
@@ -172,13 +177,19 @@ export class SocialScene extends Phaser.Scene {
   private async handleAuthClick(): Promise<void> {
     const authorized = await sdkManager.openAuthDialog();
     if (authorized) {
+      sfxManager.playSuccess();
       void this.renderActiveTab();
+      return;
     }
+    sfxManager.playError();
   }
 
   private makeButton(x: number, y: number, label: string, onClick: () => void, width = 220): void {
     const button = this.add.rectangle(x, y, width, 54, 0x14532d, 0.98).setStrokeStyle(2, 0x86efac).setInteractive({ useHandCursor: true });
     this.add.text(x, y, label, { color: '#ecfeff', fontSize: '24px' }).setOrigin(0.5);
-    button.on('pointerup', onClick);
+    button.on('pointerup', () => {
+      sfxManager.playClick();
+      onClick();
+    });
   }
 }

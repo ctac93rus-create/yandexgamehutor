@@ -14,6 +14,7 @@ import { PreloadScene } from './scenes/PreloadScene';
 import { RaidScene } from './scenes/RaidScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { SocialScene } from './scenes/SocialScene';
+import { ProgressScene } from './scenes/ProgressScene';
 
 export class GameApp {
   private game: Phaser.Game | null = null;
@@ -61,6 +62,7 @@ export class GameApp {
         RaidScene,
         SettingsScene,
         SocialScene,
+        ProgressScene,
       ],
     });
 

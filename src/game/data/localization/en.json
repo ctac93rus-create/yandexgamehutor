@@ -15,7 +15,8 @@
     "raid": "Raid",
     "settings": "Settings",
     "leaderboard": "Leaderboard",
-    "achievements": "Achievements"
+    "achievements": "Achievements",
+    "progress": "Progress"
   },
   "settings": {
     "title": "Settings",
@@ -61,7 +62,17 @@
     "time": "Time: {{value}}s",
     "baseHp": "Base HP: {{value}}",
     "cooldown": "CD: {{value}}s",
-    "freeze": "Freeze"
+    "freeze": "Freeze",
+    "resultWin": "Victory!",
+    "resultLose": "Defeat",
+    "rewardLine": "Gold +{{gold}} | Dust +{{dust}}",
+    "itemsLine": "Items: {{value}}",
+    "miniReportTitle": "Mini report",
+    "miniReportKills": "Kills: {{value}}",
+    "miniReportScore": "Score: {{value}}",
+    "miniReportMultiplier": "Multipliers: rewarded x{{rewarded}}, soft-cap x{{softCap}}",
+    "claim": "Claim",
+    "doubleRewarded": "Double (rewarded)"
   },
   "hut.bonusLine": "Bonus: {value}",
   "hut.effectGeneratorRecharge": "-{value}% generator recharge",
@@ -113,5 +124,23 @@
         "description": "Buy 3 hut upgrades"
       }
     }
+  },
+  "progress": {
+    "title": "Your progress",
+    "tabs": {
+      "progress": "Progress",
+      "stats": "Stats",
+      "economy": "Economy"
+    },
+    "currentChapter": "Current chapter: {{value}}",
+    "storyDone": "Story quests completed: {{value}}",
+    "dailyDoneToday": "Daily quests done today: {{value}}",
+    "totalMerges": "Total merges: {{value}}",
+    "bestRaidScore": "Best raid score/kills: {{value}}",
+    "raidsToday": "Raids today: {{value}}",
+    "hutUpgradesBought": "Hut upgrades purchased: {{value}}",
+    "gold": "Gold: {{value}}",
+    "dust": "Dust: {{value}}",
+    "cloudHint": "Data is synchronized through Yandex Games cloud save."
   }
 }

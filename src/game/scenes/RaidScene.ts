@@ -11,6 +11,7 @@ import { achievementsManager } from '../managers/AchievementsManager';
 import { leaderboardsManager } from '../managers/LeaderboardsManager';
 import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
+import { sfxManager } from '../managers/SfxManager';
 import { economySchema } from '../systems/merge/schema';
 import {
   getEconomyTuning,
@@ -206,15 +207,25 @@ export class RaidScene extends Phaser.Scene {
       softCapMultiplier,
     );
 
+    const baseScore = Math.max(0, Math.round(result.kills * this.tuning.raidScoreMultiplier));
+
     new RewardModal(
       this,
       result,
       baseReward,
+      {
+        rewardedMultiplier: 1,
+        softCapMultiplier,
+        score: baseScore,
+      },
       (doubled) => {
+        sfxManager.playSuccess();
         void this.claimReward(doubled, result);
       },
       () => {
+        sfxManager.playClick();
         void adsManager.showRewarded('raid_double_reward', () => {
+          sfxManager.playSuccess();
           void this.claimReward(true, result);
         });
       },

@@ -15,7 +15,8 @@
     "raid": "Рейд",
     "settings": "Настройки",
     "leaderboard": "Лидерборд",
-    "achievements": "Достижения"
+    "achievements": "Достижения",
+    "progress": "Прогресс"
   },
   "settings": {
     "title": "Настройки",
@@ -61,7 +62,17 @@
     "time": "Время: {{value}}с",
     "baseHp": "База HP: {{value}}",
     "cooldown": "КД: {{value}}с",
-    "freeze": "Заморозка"
+    "freeze": "Заморозка",
+    "resultWin": "Победа!",
+    "resultLose": "Поражение",
+    "rewardLine": "Золото +{{gold}} | Пыль +{{dust}}",
+    "itemsLine": "Предметы: {{value}}",
+    "miniReportTitle": "Мини-отчёт",
+    "miniReportKills": "Киллы: {{value}}",
+    "miniReportScore": "Счёт: {{value}}",
+    "miniReportMultiplier": "Множители: rewarded x{{rewarded}}, soft-cap x{{softCap}}",
+    "claim": "Забрать",
+    "doubleRewarded": "Удвоить (rewarded)"
   },
   "hut.bonusLine": "Бонус: {value}",
   "hut.effectGeneratorRecharge": "-{value}% перезарядки генератора",
@@ -113,5 +124,23 @@
         "description": "Купите 3 апгрейда хутора"
       }
     }
+  },
+  "progress": {
+    "title": "Ваш прогресс",
+    "tabs": {
+      "progress": "Прогресс",
+      "stats": "Статы",
+      "economy": "Экономика"
+    },
+    "currentChapter": "Текущая глава: {{value}}",
+    "storyDone": "Выполнено сюжетных квестов: {{value}}",
+    "dailyDoneToday": "Выполнено daily сегодня: {{value}}",
+    "totalMerges": "Всего merge: {{value}}",
+    "bestRaidScore": "Лучший рейд-счёт/киллы: {{value}}",
+    "raidsToday": "Рейдов сегодня: {{value}}",
+    "hutUpgradesBought": "Куплено апгрейдов хаты: {{value}}",
+    "gold": "Золото: {{value}}",
+    "dust": "Пыль: {{value}}",
+    "cloudHint": "Данные синхронизируются через облако на Яндекс.Играх."
   }
 }
