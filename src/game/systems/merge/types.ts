@@ -38,6 +38,15 @@ export interface EconomyConfig {
   startGold: number;
   startDust: number;
   raid: RaidEconomyConfig;
+  hutUpgrades?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    costGold: number;
+    costDust: number;
+    unlockFlag?: string;
+    unlockChapterId?: string;
+  }>;
 }
 
 export interface SaveState {
@@ -49,6 +58,7 @@ export interface SaveState {
     itemId: string;
   }>;
   generators: Record<string, { charges: number; lastRefillAt: number }>;
+  meta?: import('../quests/types').MetaProgressState;
 }
 
 export interface MergeAttempt {

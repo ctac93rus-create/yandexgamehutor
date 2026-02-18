@@ -35,6 +35,19 @@ export const economySchema = z.object({
   startGold: z.number().int().nonnegative(),
   startDust: z.number().int().nonnegative(),
   raid: raidEconomySchema,
+  hutUpgrades: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        title: z.string().min(1),
+        description: z.string().min(1),
+        costGold: z.number().int().nonnegative(),
+        costDust: z.number().int().nonnegative(),
+        unlockFlag: z.string().min(1).optional(),
+        unlockChapterId: z.string().min(1).optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const itemsSchema = z.array(itemDefinitionSchema).min(1);

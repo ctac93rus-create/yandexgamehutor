@@ -1,4 +1,4 @@
-# GDD Template + Milestone 1 Notes
+# GDD Template + Milestones 1–3 Notes
 
 ## Оглавление
 1. Vision
@@ -28,9 +28,17 @@
 - Награда переносится в merge: валюта + предметы; при нехватке мест срабатывает OverflowPolicy.
 - Автосейв выполняется при завершении рейда и после применения наград в merge.
 
-## Protocol A–E (Raid)
-- A. `Waves` парсит и валидирует контент, сортирует таймлайн.
-- B. `RaidController` ведёт состояние `running/victory/defeat`.
-- C. `Enemy/Defender/Spells` отвечают за бой и производительность update-loop.
-- D. `RewardCalculator` считает базовую/удвоенную награду.
-- E. `RewardModal` завершает цикл через claim в MergeScene.
+## Milestone 3: Meta / Hut + Quests
+- Добавлен полноценный `HutScene`: два блока — `QuestPanel` и `HutUpgradesPanel`.
+- Сюжетная линия: 12 квестов по главам (`chapter_1..chapter_4`), награда за каждый квест может быть получена только один раз.
+- Ежедневки: всегда 3 активных слота; ротация раз в UTC-день с детерминированным роллом.
+- Апгрейды хутора тратят золото/пыль и открывают главы/флаги прогрессии (`unlockChapterId`/`unlockFlag`).
+- Навигация стабильна между Merge ↔ Hut ↔ Raid через нижние кнопки.
+- Анти-софтлок правило: квесты не требуют недостижимого предмета; прогресс строится на merge/generator/raid событиях, которые всегда доступны.
+
+## Protocol A–E (Meta + Quests)
+- A. `StoryChapters`: каталог сюжетных квестов и проверка завершения глав.
+- B. `DailyQuests`: ежедневный deterministic-roll на 3 слота.
+- C. `QuestEngine`: события, прогресс шагов, открытие глав, выдача одноразовых/ежедневных наград.
+- D. `HutScene`: покупка апгрейдов, применение unlock-флагов и сохранение в meta-state.
+- E. `MergeScene`/`RaidScene`: публикация событий (`merge_done`, `generator_spawn`, `raid_complete`, `raid_win`) без разрыва core loop.

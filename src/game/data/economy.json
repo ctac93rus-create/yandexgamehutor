@@ -12,5 +12,33 @@
       "twig",
       "branch"
     ]
-  }
+  },
+  "hutUpgrades": [
+    {
+      "id": "hut_storage",
+      "title": "Склад",
+      "description": "Открывает главу 2 квестов",
+      "costGold": 80,
+      "costDust": 10,
+      "unlockChapterId": "chapter_2"
+    },
+    {
+      "id": "hut_watchtower",
+      "title": "Сторожевая башня",
+      "description": "Открывает сложные рейдовые поручения",
+      "costGold": 120,
+      "costDust": 20,
+      "unlockChapterId": "chapter_3",
+      "unlockFlag": "unlock_raid_chain"
+    },
+    {
+      "id": "hut_forge",
+      "title": "Кузня",
+      "description": "Открывает главу 4 и финальную прогрессию",
+      "costGold": 170,
+      "costDust": 30,
+      "unlockChapterId": "chapter_4",
+      "unlockFlag": "unlock_elite_raid"
+    }
+  ]
 }
