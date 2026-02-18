@@ -5,6 +5,8 @@ import economyJson from '../data/economy.json';
 import itemsJson from '../data/items.json';
 import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
+import { adsManager } from '../managers/AdsManager';
+import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { Generators } from '../systems/merge/Generators';
 import { GRID_CELL_SIZE, ItemEntity } from '../systems/merge/ItemEntity';
@@ -60,6 +62,7 @@ export class MergeScene extends Phaser.Scene {
 
     await this.restoreOrSeedBoard();
     await this.applyPendingRaidReward();
+    await adsManager.onScreenShown();
 
     this.bindDragAndDrop();
     this.bindGeneratorTap();
@@ -148,6 +151,18 @@ export class MergeScene extends Phaser.Scene {
       .text(320, 705, 'В рейд', buttonStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('RaidScene'));
+    this.add
+      .text(450, 705, 'Заряд генератора (rewarded)', {
+        ...buttonStyle,
+        color: '#e9d5ff',
+        backgroundColor: '#4c1d95',
+      })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => {
+        void adsManager.showRewarded('merge_generator_charge', () => {
+          this.grantRewardedGeneratorCharge();
+        });
+      });
 
     this.refreshHud();
   }
@@ -330,6 +345,30 @@ export class MergeScene extends Phaser.Scene {
       this.refreshHud();
       void this.persistState('generator_spawn');
     });
+  }
+
+
+  private grantRewardedGeneratorCharge(): void {
+    const flags = remoteConfigManager.getFlags();
+    let granted = 0;
+    this.runtimeItems.forEach((entity) => {
+      if (!entity.item.generator) {
+        return;
+      }
+      for (let i = 0; i < flags.rewardedMergeGeneratorCharges; i += 1) {
+        const state = this.generators.getState(entity.runtimeId, entity.item.generator);
+        if (state.charges >= entity.item.generator.maxCharges) {
+          break;
+        }
+        state.charges = Math.min(entity.item.generator.maxCharges, state.charges + 1);
+        state.lastRefillAt = Date.now();
+        granted += 1;
+      }
+    });
+
+    this.showToast(granted > 0 ? `Rewarded: +${granted} зарядов` : 'Генераторы уже заряжены');
+    this.refreshHud();
+    void this.persistState('rewarded_generator_charge');
   }
 
   private spawnItemById(itemId: string): boolean {
