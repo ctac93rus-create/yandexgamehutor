@@ -7,11 +7,7 @@
     "goldPerKill": 1,
     "baseDust": 3,
     "dustPerSurvivedHp": 1,
-    "rewardItems": [
-      "twig",
-      "twig",
-      "branch"
-    ]
+    "rewardItems": ["twig", "twig", "branch"]
   },
   "hutUpgrades": [
     {
@@ -20,7 +16,12 @@
       "description": "Открывает главу 2 квестов",
       "costGold": 80,
       "costDust": 10,
-      "unlockChapterId": "chapter_2"
+      "unlockChapterId": "chapter_2",
+      "effects": {
+        "merge": {
+          "generatorRechargeMult": 0.9
+        }
+      }
     },
     {
       "id": "hut_watchtower",
@@ -29,7 +30,12 @@
       "costGold": 120,
       "costDust": 20,
       "unlockChapterId": "chapter_3",
-      "unlockFlag": "unlock_raid_chain"
+      "unlockFlag": "unlock_raid_chain",
+      "effects": {
+        "raid": {
+          "defenderDpsMult": 1.1
+        }
+      }
     },
     {
       "id": "hut_forge",
@@ -38,7 +44,36 @@
       "costGold": 170,
       "costDust": 30,
       "unlockChapterId": "chapter_4",
-      "unlockFlag": "unlock_elite_raid"
+      "unlockFlag": "unlock_elite_raid",
+      "effects": {
+        "raid": {
+          "baseHpAdd": 10
+        }
+      }
+    },
+    {
+      "id": "hut_workshop",
+      "title": "Мастерская генератора",
+      "description": "Усиливает генераторы в мердже",
+      "costGold": 140,
+      "costDust": 24,
+      "effects": {
+        "merge": {
+          "generatorMaxChargesAdd": 1
+        }
+      }
+    },
+    {
+      "id": "hut_sanctum",
+      "title": "Магический круг",
+      "description": "Сокращает перезарядку заклинаний в рейде",
+      "costGold": 160,
+      "costDust": 28,
+      "effects": {
+        "raid": {
+          "spellCooldownMult": 0.9
+        }
+      }
     }
   ]
 }

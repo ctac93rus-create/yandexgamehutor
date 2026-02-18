@@ -60,5 +60,11 @@
     "baseHp": "Base HP: {{value}}",
     "cooldown": "CD: {{value}}s",
     "freeze": "Freeze"
-  }
+  },
+  "hut.bonusLine": "Bonus: {value}",
+  "hut.effectGeneratorRecharge": "-{value}% generator recharge",
+  "hut.effectGeneratorCharges": "+{value} max generator charges",
+  "hut.effectDefenderDps": "+{value}% defender DPS",
+  "hut.effectBaseHp": "+{value} base HP",
+  "hut.effectSpellCooldown": "-{value}% spell cooldown"
 }

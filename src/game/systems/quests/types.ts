@@ -41,6 +41,17 @@ export interface HutUpgradeDefinition {
   costDust: number;
   unlockFlag?: string;
   unlockChapterId?: string;
+  effects?: {
+    merge?: {
+      generatorRechargeMult?: number;
+      generatorMaxChargesAdd?: number;
+    };
+    raid?: {
+      defenderDpsMult?: number;
+      baseHpAdd?: number;
+      spellCooldownMult?: number;
+    };
+  };
 }
 
 export interface QuestProgressState {
@@ -72,8 +83,24 @@ export interface MetaProgressState {
 }
 
 export interface QuestSnapshot {
-  story: Array<{ id: string; title: string; description: string; completed: boolean; rewardClaimed: boolean; stepCurrent: number; stepTarget: number }>;
-  daily: Array<{ id: string; title: string; description: string; completed: boolean; rewardClaimed: boolean; current: number; target: number }>;
+  story: Array<{
+    id: string;
+    title: string;
+    description: string;
+    completed: boolean;
+    rewardClaimed: boolean;
+    stepCurrent: number;
+    stepTarget: number;
+  }>;
+  daily: Array<{
+    id: string;
+    title: string;
+    description: string;
+    completed: boolean;
+    rewardClaimed: boolean;
+    current: number;
+    target: number;
+  }>;
 }
 
 export interface QuestReward {

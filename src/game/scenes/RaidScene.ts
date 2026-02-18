@@ -16,7 +16,14 @@ import { RaidController } from '../systems/raid/RaidController';
 import { RewardCalculator } from '../systems/raid/RewardCalculator';
 import { Spells } from '../systems/raid/Spells';
 import { Waves } from '../systems/raid/Waves';
-import type { EnemyDefinition, LaneGeometry, RaidResult, WavesConfig } from '../systems/raid/types';
+import { getDefaultBonuses } from '../systems/meta/bonuses';
+import type {
+  EnemyDefinition,
+  LaneGeometry,
+  RaidResult,
+  WavesConfig,
+} from '../systems/raid/types';
+import type { MetaBonuses } from '../systems/meta/bonuses';
 import { RaidHUD } from '../ui/hud/RaidHUD';
 import { RewardModal } from '../ui/hud/RewardModal';
 
@@ -26,6 +33,10 @@ const LANES: LaneGeometry[] = [
   { index: 2, spawnX: 1230, baseX: 120, y: 500 },
 ];
 
+interface RaidSceneData {
+  bonuses?: MetaBonuses;
+}
+
 export class RaidScene extends Phaser.Scene {
   private enemiesById = new Map<string, EnemyDefinition>();
   private waves!: WavesConfig;
@@ -33,7 +44,7 @@ export class RaidScene extends Phaser.Scene {
   private readonly enemies: Enemy[] = [];
   private readonly defenders: Defender[] = [];
   private readonly controller = new RaidController();
-  private readonly spell = new Spells(12, 3.5, 220);
+  private spell = new Spells(12, 3.5, 220);
 
   private hud!: RaidHUD;
   private rewardCalculator!: RewardCalculator;
@@ -44,9 +55,14 @@ export class RaidScene extends Phaser.Scene {
   private baseHp = 1;
   private spellFx?: Phaser.GameObjects.Arc;
   private lastSpellFxAt = -1000;
+  private bonuses: MetaBonuses = getDefaultBonuses();
 
   public constructor() {
     super('RaidScene');
+  }
+
+  public init(data: RaidSceneData): void {
+    this.bonuses = data.bonuses ?? getDefaultBonuses();
   }
 
   public create(): void {
@@ -58,7 +74,12 @@ export class RaidScene extends Phaser.Scene {
     this.rewardCalculator = new RewardCalculator(economy.raid);
 
     this.waves = Waves.parse(wavesJson);
-    this.baseHp = this.waves.baseHp;
+    this.baseHp = Math.max(1, this.waves.baseHp + this.bonuses.raid.baseHpAdd);
+    this.spell = new Spells(
+      Math.max(1, 12 * this.bonuses.raid.spellCooldownMult),
+      3.5,
+      220,
+    );
 
     const enemyDefs = enemiesJson as EnemyDefinition[];
     for (let i = 0; i < enemyDefs.length; i += 1) {
@@ -66,10 +87,20 @@ export class RaidScene extends Phaser.Scene {
     }
 
     for (let i = 0; i < LANES.length; i += 1) {
-      this.defenders.push(new Defender(this, LANES[i], 18, 360));
+      this.defenders.push(
+        new Defender(
+          this,
+          LANES[i],
+          Math.max(1, 18 * this.bonuses.raid.defenderDpsMult),
+          360,
+        ),
+      );
     }
 
-    this.spellFx = this.add.circle(550, 360, 220, 0x93c5fd, 0.18).setDepth(2).setVisible(false);
+    this.spellFx = this.add
+      .circle(550, 360, 220, 0x93c5fd, 0.18)
+      .setDepth(2)
+      .setVisible(false);
 
     this.hud = new RaidHUD(this, () => {
       const casted = this.spell.tryCast(550, 360, this.enemies);
@@ -112,16 +143,29 @@ export class RaidScene extends Phaser.Scene {
     }
     this.enemies.length = write;
 
-    this.hud.render(Math.max(0, this.waves.durationSec - this.elapsedSec), this.baseHp, this.spell.cooldownLeftSec);
+    this.hud.render(
+      Math.max(0, this.waves.durationSec - this.elapsedSec),
+      this.baseHp,
+      this.spell.cooldownLeftSec,
+    );
 
-    const state = this.controller.evaluate(this.elapsedSec, this.waves.durationSec, this.baseHp, this.enemies.length);
+    const state = this.controller.evaluate(
+      this.elapsedSec,
+      this.waves.durationSec,
+      this.baseHp,
+      this.enemies.length,
+    );
     if (state !== 'running') {
       this.finishRaid();
     }
   }
 
   private processSpawnTimeline(): void {
-    const nextCursor = Waves.nextBatch(this.waves.timeline, this.elapsedSec, this.spawnCursor);
+    const nextCursor = Waves.nextBatch(
+      this.waves.timeline,
+      this.elapsedSec,
+      this.spawnCursor,
+    );
     while (this.spawnCursor < nextCursor) {
       const spawn = this.waves.timeline[this.spawnCursor];
       const lane = LANES[spawn.lane];
@@ -134,7 +178,11 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private finishRaid(): void {
-    const result = this.controller.finalize(this.kills, this.baseHp, this.elapsedSec);
+    const result = this.controller.finalize(
+      this.kills,
+      this.baseHp,
+      this.elapsedSec,
+    );
     const baseReward = this.rewardCalculator.calculate(result, false);
 
     new RewardModal(
@@ -154,7 +202,10 @@ export class RaidScene extends Phaser.Scene {
     void adsManager.onRaidFinished();
   }
 
-  private async claimReward(doubled: boolean, result: RaidResult): Promise<void> {
+  private async claimReward(
+    doubled: boolean,
+    result: RaidResult,
+  ): Promise<void> {
     const reward = this.rewardCalculator.calculate(result, doubled);
     const save = await saveManager.load();
     if (save) {
@@ -172,7 +223,6 @@ export class RaidScene extends Phaser.Scene {
       raidMeta: result,
     });
   }
-
 
   private playSpellFx(): void {
     const now = this.time.now;
@@ -192,8 +242,20 @@ export class RaidScene extends Phaser.Scene {
     });
   }
   private drawLanes(): void {
-    this.add.rectangle(this.scale.width * 0.5, 54, this.scale.width - 60, 82, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
-    this.add.text(40, 28, localizationManager.t('raid.title'), { color: '#f8fafc', fontSize: '36px' });
+    this.add
+      .rectangle(
+        this.scale.width * 0.5,
+        54,
+        this.scale.width - 60,
+        82,
+        0x1e293b,
+        0.95,
+      )
+      .setStrokeStyle(2, 0x334155);
+    this.add.text(40, 28, localizationManager.t('raid.title'), {
+      color: '#f8fafc',
+      fontSize: '36px',
+    });
     for (let i = 0; i < LANES.length; i += 1) {
       const lane = LANES[i];
       this.add.rectangle(640, lane.y, 1220, 90, 0x1e293b, 0.75).setDepth(1);

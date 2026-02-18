@@ -30,24 +30,39 @@ export const raidEconomySchema = z.object({
   rewardItems: z.array(z.string().min(1)).min(1),
 });
 
+const hutUpgradeEffectsSchema = z.object({
+  merge: z
+    .object({
+      generatorRechargeMult: z.number().positive().optional(),
+      generatorMaxChargesAdd: z.number().int().optional(),
+    })
+    .optional(),
+  raid: z
+    .object({
+      defenderDpsMult: z.number().positive().optional(),
+      baseHpAdd: z.number().int().optional(),
+      spellCooldownMult: z.number().positive().optional(),
+    })
+    .optional(),
+});
+
+const hutUpgradeSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  costGold: z.number().int().nonnegative(),
+  costDust: z.number().int().nonnegative(),
+  unlockFlag: z.string().min(1).optional(),
+  unlockChapterId: z.string().min(1).optional(),
+  effects: hutUpgradeEffectsSchema.optional(),
+});
+
 export const economySchema = z.object({
   overflowDustPerItem: z.number().int().nonnegative(),
   startGold: z.number().int().nonnegative(),
   startDust: z.number().int().nonnegative(),
   raid: raidEconomySchema,
-  hutUpgrades: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        title: z.string().min(1),
-        description: z.string().min(1),
-        costGold: z.number().int().nonnegative(),
-        costDust: z.number().int().nonnegative(),
-        unlockFlag: z.string().min(1).optional(),
-        unlockChapterId: z.string().min(1).optional(),
-      }),
-    )
-    .optional(),
+  hutUpgrades: z.array(hutUpgradeSchema).optional(),
 });
 
 export const itemsSchema = z.array(itemDefinitionSchema).min(1);

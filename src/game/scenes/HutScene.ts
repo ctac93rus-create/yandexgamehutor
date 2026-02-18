@@ -9,9 +9,13 @@ import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { economySchema } from '../systems/merge/schema';
+import { computeBonuses } from '../systems/meta/bonuses';
 import type { EconomyConfig, SaveState } from '../systems/merge/types';
 import { QuestEngine } from '../systems/quests/QuestEngine';
-import type { HutUpgradeDefinition, MetaProgressState } from '../systems/quests/types';
+import type {
+  HutUpgradeDefinition,
+  MetaProgressState,
+} from '../systems/quests/types';
 import { HutUpgradesPanel } from '../ui/hut/HutUpgradesPanel';
 import { QuestPanel } from '../ui/hut/QuestPanel';
 
@@ -20,6 +24,7 @@ export class HutScene extends Phaser.Scene {
   private meta!: MetaProgressState;
   private questEngine!: QuestEngine;
   private upgrades: HutUpgradeDefinition[] = [];
+  private saveEconomy!: EconomyConfig;
 
   private goldText!: Phaser.GameObjects.Text;
   private dustText!: Phaser.GameObjects.Text;
@@ -31,8 +36,20 @@ export class HutScene extends Phaser.Scene {
 
   public async create(): Promise<void> {
     this.cameras.main.setBackgroundColor('#0b1220');
-    this.add.rectangle(this.scale.width * 0.5, 56, this.scale.width - 60, 84, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
-    this.add.text(40, 30, localizationManager.t('hut.title'), { color: '#f8fafc', fontSize: '34px' });
+    this.add
+      .rectangle(
+        this.scale.width * 0.5,
+        56,
+        this.scale.width - 60,
+        84,
+        0x1e293b,
+        0.95,
+      )
+      .setStrokeStyle(2, 0x334155);
+    this.add.text(40, 30, localizationManager.t('hut.title'), {
+      color: '#f8fafc',
+      fontSize: '34px',
+    });
 
     await this.restoreState();
     this.renderScene();
@@ -41,16 +58,16 @@ export class HutScene extends Phaser.Scene {
 
   private async restoreState(): Promise<void> {
     const economy = economySchema.parse(economyJson) as EconomyConfig;
+    this.saveEconomy = economy;
     this.upgrades = economy.hutUpgrades ?? [];
 
     const existing = await saveManager.load();
-    this.saveState =
-      existing ?? {
-        gold: economy.startGold,
-        dust: economy.startDust,
-        occupiedCells: [],
-        generators: {},
-      };
+    this.saveState = existing ?? {
+      gold: economy.startGold,
+      dust: economy.startDust,
+      occupiedCells: [],
+      generators: {},
+    };
 
     this.meta = this.saveState.meta ?? QuestEngine.defaultState();
     this.saveState.meta = this.meta;
@@ -60,8 +77,14 @@ export class HutScene extends Phaser.Scene {
   }
 
   private renderScene(): void {
-    this.goldText = this.add.text(330, 22, '', { color: '#fbbf24', fontSize: '24px' });
-    this.dustText = this.add.text(510, 22, '', { color: '#a78bfa', fontSize: '24px' });
+    this.goldText = this.add.text(330, 22, '', {
+      color: '#fbbf24',
+      fontSize: '24px',
+    });
+    this.dustText = this.add.text(510, 22, '', {
+      color: '#a78bfa',
+      fontSize: '24px',
+    });
     this.toastText = this.add
       .text(this.scale.width / 2, 80, '', {
         color: '#f8fafc',
@@ -95,7 +118,12 @@ export class HutScene extends Phaser.Scene {
     questPanel.render(this.questEngine.snapshot());
     upgradesPanel.render(this.upgrades, this.meta.purchasedUpgradeIds);
 
-    const navStyle = { color: '#d1fae5', fontSize: '20px', backgroundColor: '#064e3b', padding: { x: 8, y: 4 } };
+    const navStyle = {
+      color: '#d1fae5',
+      fontSize: '20px',
+      backgroundColor: '#064e3b',
+      padding: { x: 8, y: 4 },
+    };
     this.add
       .text(60, 678, localizationManager.t('common.toMerge'), navStyle)
       .setInteractive({ useHandCursor: true })
@@ -103,13 +131,21 @@ export class HutScene extends Phaser.Scene {
     this.add
       .text(190, 678, localizationManager.t('common.toRaid'), navStyle)
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('RaidScene'));
+      .on('pointerup', () =>
+        this.scene.start('RaidScene', {
+          bonuses: computeBonuses(this.meta, this.saveEconomy),
+        }),
+      );
     this.add
       .text(320, 678, localizationManager.t('common.backToMenu'), navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('MenuScene'));
     this.add
-      .text(470, 678, localizationManager.t('hut.booster'), { ...navStyle, backgroundColor: '#4c1d95', color: '#e9d5ff' })
+      .text(470, 678, localizationManager.t('hut.booster'), {
+        ...navStyle,
+        backgroundColor: '#4c1d95',
+        color: '#e9d5ff',
+      })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         void adsManager.showRewarded('hut_booster', () => {
@@ -117,7 +153,11 @@ export class HutScene extends Phaser.Scene {
         });
       });
     this.add
-      .text(760, 678, localizationManager.t('hut.buyGold'), { ...navStyle, backgroundColor: '#7c2d12', color: '#ffedd5' })
+      .text(760, 678, localizationManager.t('hut.buyGold'), {
+        ...navStyle,
+        backgroundColor: '#7c2d12',
+        color: '#ffedd5',
+      })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         void this.buyGoldPack();
@@ -126,12 +166,13 @@ export class HutScene extends Phaser.Scene {
     this.refreshHud();
   }
 
-
   private async claimRewardedBooster(): Promise<void> {
     const flags = remoteConfigManager.getFlags();
     this.saveState.gold += flags.rewardedHutBoosterGold;
     this.saveState.dust += flags.rewardedHutBoosterDust;
-    await this.persist(`Rewarded: +${flags.rewardedHutBoosterGold} золота, +${flags.rewardedHutBoosterDust} пыли`);
+    await this.persist(
+      `Rewarded: +${flags.rewardedHutBoosterGold} золота, +${flags.rewardedHutBoosterDust} пыли`,
+    );
   }
 
   private async buyGoldPack(): Promise<void> {
@@ -157,7 +198,10 @@ export class HutScene extends Phaser.Scene {
       this.showToast(localizationManager.t('hut.alreadyBought'));
       return;
     }
-    if (this.saveState.gold < upgrade.costGold || this.saveState.dust < upgrade.costDust) {
+    if (
+      this.saveState.gold < upgrade.costGold ||
+      this.saveState.dust < upgrade.costDust
+    ) {
       this.showToast(localizationManager.t('hut.notEnough'));
       return;
     }
@@ -165,15 +209,23 @@ export class HutScene extends Phaser.Scene {
     this.saveState.gold -= upgrade.costGold;
     this.saveState.dust -= upgrade.costDust;
     this.meta.purchasedUpgradeIds.push(upgrade.id);
-    if (upgrade.unlockFlag && !this.meta.unlockedFlags.includes(upgrade.unlockFlag)) {
+    if (
+      upgrade.unlockFlag &&
+      !this.meta.unlockedFlags.includes(upgrade.unlockFlag)
+    ) {
       this.meta.unlockedFlags.push(upgrade.unlockFlag);
     }
-    if (upgrade.unlockChapterId && !this.meta.quests.unlockedChapters.includes(upgrade.unlockChapterId)) {
+    if (
+      upgrade.unlockChapterId &&
+      !this.meta.quests.unlockedChapters.includes(upgrade.unlockChapterId)
+    ) {
       this.meta.quests.unlockedChapters.push(upgrade.unlockChapterId);
     }
 
     this.questEngine.onEvent('hut_upgrade', 1);
-    await this.persist(localizationManager.t('hut.upgradeBought', { title: upgrade.title }));
+    await this.persist(
+      localizationManager.t('hut.upgradeBought', { title: upgrade.title }),
+    );
     this.scene.restart();
   }
 
@@ -190,8 +242,12 @@ export class HutScene extends Phaser.Scene {
     if (!this.goldText || !this.dustText) {
       return;
     }
-    this.goldText.setText(localizationManager.t('merge.gold', { value: this.saveState.gold }));
-    this.dustText.setText(localizationManager.t('merge.dust', { value: this.saveState.dust }));
+    this.goldText.setText(
+      localizationManager.t('merge.gold', { value: this.saveState.gold }),
+    );
+    this.dustText.setText(
+      localizationManager.t('merge.dust', { value: this.saveState.dust }),
+    );
   }
 
   private showToast(text: string): void {

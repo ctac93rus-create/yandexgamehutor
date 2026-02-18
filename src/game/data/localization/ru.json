@@ -60,5 +60,11 @@
     "baseHp": "База HP: {{value}}",
     "cooldown": "КД: {{value}}с",
     "freeze": "Заморозка"
-  }
+  },
+  "hut.bonusLine": "Бонус: {value}",
+  "hut.effectGeneratorRecharge": "-{value}% перезарядки генератора",
+  "hut.effectGeneratorCharges": "+{value} макс. зарядов генератора",
+  "hut.effectDefenderDps": "+{value}% DPS защитников",
+  "hut.effectBaseHp": "+{value} HP базы",
+  "hut.effectSpellCooldown": "-{value}% кулдауна заклинания"
 }
