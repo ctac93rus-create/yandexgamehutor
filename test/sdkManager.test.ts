@@ -15,6 +15,18 @@ describe('SDKManager', () => {
     await expect(manager.getFlags({ hardMode: false })).resolves.toEqual({ hardMode: false });
   });
 
+  it('falls back to mock sdk when YaGames.init throws', async () => {
+    (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames = {
+      init: async () => {
+        throw new Error('sdk unavailable');
+      },
+    };
+
+    const manager = new SDKManager();
+    await expect(manager.init()).resolves.toBeUndefined();
+    await expect(manager.getFlags({ hardMode: false })).resolves.toEqual({ hardMode: false });
+  });
+
   it('calls LoadingAPI.ready only once', async () => {
     const ready = vi.fn();
     (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames = {
