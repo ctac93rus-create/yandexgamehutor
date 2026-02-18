@@ -2,13 +2,25 @@ import Phaser from 'phaser';
 
 import { adsManager } from '../managers/AdsManager';
 import { sdkManager } from '../managers/SDKManager';
+import { localizationManager } from '../managers/LocalizationManager';
+import type { Locale } from '../managers/SettingsManager';
 
-const MENU_ITEMS = [
-  { title: 'Играть (Merge)', target: 'MergeScene' },
-  { title: 'Хутор', target: 'HutScene' },
-  { title: 'Рейд', target: 'RaidScene' },
-  { title: 'Настройки', target: 'SettingsScene' },
-] as const;
+interface MenuItem {
+  titleKey: string;
+  target: string;
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  { titleKey: 'menu.playMerge', target: 'MergeScene' },
+  { titleKey: 'menu.hut', target: 'HutScene' },
+  { titleKey: 'menu.raid', target: 'RaidScene' },
+  { titleKey: 'menu.settings', target: 'SettingsScene' },
+];
+
+const TITLE_BY_LOCALE: Record<Locale, string> = {
+  ru: 'Yandex Game Hutor',
+  en: 'Yandex Game Hutor',
+};
 
 export class MenuScene extends Phaser.Scene {
   public constructor() {
@@ -19,25 +31,27 @@ export class MenuScene extends Phaser.Scene {
     void adsManager.onScreenShown();
     this.cameras.main.setBackgroundColor('#020617');
 
+    this.add.rectangle(this.scale.width * 0.5, 92, 560, 120, 0x1e293b, 0.92).setStrokeStyle(2, 0x334155);
     this.add
-      .text(this.scale.width * 0.5, 80, 'Yandex Game Hutor', {
+      .text(this.scale.width * 0.5, 92, TITLE_BY_LOCALE[localizationManager.getLocale()], {
         color: '#f8fafc',
         fontFamily: 'Arial',
-        fontSize: '46px',
+        fontSize: '48px',
       })
       .setOrigin(0.5);
 
     MENU_ITEMS.forEach((item, index) => {
-      const y = 180 + index * 92;
+      const y = 230 + index * 108;
       const button = this.add
-        .image(this.scale.width * 0.5, y, 'btn-primary')
+        .rectangle(this.scale.width * 0.5, y, 460, 80, 0x14532d, 0.98)
+        .setStrokeStyle(2, 0x86efac)
         .setInteractive({ useHandCursor: true });
 
       this.add
-        .text(button.x, y, item.title, {
-          color: '#052e16',
+        .text(button.x, y, localizationManager.t(item.titleKey), {
+          color: '#ecfeff',
           fontFamily: 'Arial',
-          fontSize: '28px',
+          fontSize: '34px',
         })
         .setOrigin(0.5);
 

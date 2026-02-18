@@ -5,18 +5,20 @@ import { purchasesManager } from './managers/PurchasesManager';
 import { remoteConfigManager } from './managers/RemoteConfigManager';
 import { saveManager } from './managers/SaveManager';
 import { sdkManager } from './managers/SDKManager';
+import { localizationManager } from './managers/LocalizationManager';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { HutScene } from './scenes/HutScene';
 import { MergeScene } from './scenes/MergeScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { RaidScene } from './scenes/RaidScene';
-import { WipScene } from './scenes/WipScene';
+import { SettingsScene } from './scenes/SettingsScene';
 
 export class GameApp {
   private game: Phaser.Game | null = null;
 
   public async start(): Promise<void> {
+    localizationManager.init();
     await sdkManager.init();
     await remoteConfigManager.init();
 
@@ -56,7 +58,7 @@ export class GameApp {
         MergeScene,
         HutScene,
         RaidScene,
-        new WipScene('SettingsScene', 'Настройки'),
+        SettingsScene,
       ],
     });
 

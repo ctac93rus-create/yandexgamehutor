@@ -5,6 +5,7 @@ import storyJson from '../data/quests_story.json';
 import economyJson from '../data/economy.json';
 import { adsManager } from '../managers/AdsManager';
 import { purchasesManager } from '../managers/PurchasesManager';
+import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { economySchema } from '../systems/merge/schema';
@@ -30,7 +31,8 @@ export class HutScene extends Phaser.Scene {
 
   public async create(): Promise<void> {
     this.cameras.main.setBackgroundColor('#0b1220');
-    this.add.text(30, 20, 'Хутор / Meta', { color: '#f8fafc', fontSize: '30px' });
+    this.add.rectangle(this.scale.width * 0.5, 56, this.scale.width - 60, 84, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
+    this.add.text(40, 30, localizationManager.t('hut.title'), { color: '#f8fafc', fontSize: '34px' });
 
     await this.restoreState();
     this.renderScene();
@@ -74,13 +76,13 @@ export class HutScene extends Phaser.Scene {
         const reward = this.questEngine.claimStoryReward(id);
         this.saveState.gold += reward.gold;
         this.saveState.dust += reward.dust;
-        void this.persist('Сюжетная награда получена');
+        void this.persist(localizationManager.t('hut.storyClaimed'));
       },
       onClaimDaily: (id) => {
         const reward = this.questEngine.claimDailyReward(id);
         this.saveState.gold += reward.gold;
         this.saveState.dust += reward.dust;
-        void this.persist('Ежедневка получена');
+        void this.persist(localizationManager.t('hut.dailyClaimed'));
       },
     });
 
@@ -95,19 +97,19 @@ export class HutScene extends Phaser.Scene {
 
     const navStyle = { color: '#d1fae5', fontSize: '20px', backgroundColor: '#064e3b', padding: { x: 8, y: 4 } };
     this.add
-      .text(60, 678, 'В merge', navStyle)
+      .text(60, 678, localizationManager.t('common.toMerge'), navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('MergeScene'));
     this.add
-      .text(190, 678, 'В рейд', navStyle)
+      .text(190, 678, localizationManager.t('common.toRaid'), navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('RaidScene'));
     this.add
-      .text(300, 678, 'В меню', navStyle)
+      .text(320, 678, localizationManager.t('common.backToMenu'), navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('MenuScene'));
     this.add
-      .text(430, 678, 'Бустер (rewarded)', { ...navStyle, backgroundColor: '#4c1d95', color: '#e9d5ff' })
+      .text(470, 678, localizationManager.t('hut.booster'), { ...navStyle, backgroundColor: '#4c1d95', color: '#e9d5ff' })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         void adsManager.showRewarded('hut_booster', () => {
@@ -115,7 +117,7 @@ export class HutScene extends Phaser.Scene {
         });
       });
     this.add
-      .text(650, 678, 'Купить золото (IAP)', { ...navStyle, backgroundColor: '#7c2d12', color: '#ffedd5' })
+      .text(760, 678, localizationManager.t('hut.buyGold'), { ...navStyle, backgroundColor: '#7c2d12', color: '#ffedd5' })
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         void this.buyGoldPack();
@@ -135,14 +137,14 @@ export class HutScene extends Phaser.Scene {
   private async buyGoldPack(): Promise<void> {
     const success = await purchasesManager.purchase('pack_gold_small');
     if (!success) {
-      this.showToast('Покупка недоступна');
+      this.showToast(localizationManager.t('hut.purchaseUnavailable'));
       return;
     }
     const latest = await saveManager.load();
     if (latest) {
       this.saveState = latest;
     }
-    this.showToast('Покупка применена');
+    this.showToast(localizationManager.t('hut.purchaseApplied'));
     this.refreshHud();
   }
 
@@ -152,11 +154,11 @@ export class HutScene extends Phaser.Scene {
       return;
     }
     if (this.meta.purchasedUpgradeIds.includes(id)) {
-      this.showToast('Уже куплено');
+      this.showToast(localizationManager.t('hut.alreadyBought'));
       return;
     }
     if (this.saveState.gold < upgrade.costGold || this.saveState.dust < upgrade.costDust) {
-      this.showToast('Недостаточно ресурсов');
+      this.showToast(localizationManager.t('hut.notEnough'));
       return;
     }
 
@@ -171,7 +173,7 @@ export class HutScene extends Phaser.Scene {
     }
 
     this.questEngine.onEvent('hut_upgrade', 1);
-    await this.persist(`Куплен апгрейд: ${upgrade.title}`);
+    await this.persist(localizationManager.t('hut.upgradeBought', { title: upgrade.title }));
     this.scene.restart();
   }
 
@@ -188,8 +190,8 @@ export class HutScene extends Phaser.Scene {
     if (!this.goldText || !this.dustText) {
       return;
     }
-    this.goldText.setText(`Золото: ${this.saveState.gold}`);
-    this.dustText.setText(`Пыль: ${this.saveState.dust}`);
+    this.goldText.setText(localizationManager.t('merge.gold', { value: this.saveState.gold }));
+    this.dustText.setText(localizationManager.t('merge.dust', { value: this.saveState.dust }));
   }
 
   private showToast(text: string): void {

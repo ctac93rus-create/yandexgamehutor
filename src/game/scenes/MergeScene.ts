@@ -6,8 +6,10 @@ import itemsJson from '../data/items.json';
 import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
 import { adsManager } from '../managers/AdsManager';
+import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
+import { settingsManager } from '../managers/SettingsManager';
 import { Generators } from '../systems/merge/Generators';
 import { GRID_CELL_SIZE, ItemEntity } from '../systems/merge/ItemEntity';
 import { Inventory } from '../systems/merge/Inventory';
@@ -24,6 +26,14 @@ const GRID_ROWS = 6;
 const GRID_COLS = 7;
 const GRID_ORIGIN = { x: 60, y: 110 };
 
+const TUTORIAL_STEPS = [
+  { textKey: 'merge.tutorial.step1', x: 360, y: 360, w: 640, h: 480 },
+  { textKey: 'merge.tutorial.step2', x: 360, y: 360, w: 640, h: 480 },
+  { textKey: 'merge.tutorial.step3', x: 130, y: 150, w: 120, h: 120 },
+  { textKey: 'merge.tutorial.step4', x: 645, y: 705, w: 420, h: 60 },
+  { textKey: 'merge.tutorial.step5', x: 220, y: 705, w: 350, h: 60 },
+] as const;
+
 interface MergeSceneData {
   raidReward?: RaidReward;
 }
@@ -32,6 +42,7 @@ export class MergeScene extends Phaser.Scene {
   private readonly grid = new MergeGrid(GRID_ROWS, GRID_COLS);
   private readonly generators = new Generators();
   private readonly runtimeItems = new Map<string, ItemEntity>();
+  private readonly entityBySprite = new Map<Phaser.GameObjects.GameObject, ItemEntity>();
 
   private itemsById = new Map<string, ItemDefinition>();
   private mergeResolver!: MergeResolver;
@@ -47,6 +58,13 @@ export class MergeScene extends Phaser.Scene {
   private goldText!: Phaser.GameObjects.Text;
   private dustText!: Phaser.GameObjects.Text;
   private toastText!: Phaser.GameObjects.Text;
+
+  private tutorialOverlay?: Phaser.GameObjects.Rectangle;
+  private tutorialFrame?: Phaser.GameObjects.Rectangle;
+  private tutorialText?: Phaser.GameObjects.Text;
+  private tutorialButton?: Phaser.GameObjects.Rectangle;
+  private tutorialButtonLabel?: Phaser.GameObjects.Text;
+  private tutorialStep = 0;
 
   public constructor() {
     super('MergeScene');
@@ -89,6 +107,8 @@ export class MergeScene extends Phaser.Scene {
         }
       },
     });
+
+    this.tryStartTutorial();
   }
 
   private bootstrapData(): void {
@@ -105,15 +125,16 @@ export class MergeScene extends Phaser.Scene {
 
   private drawLayout(): void {
     this.cameras.main.setBackgroundColor('#111827');
-    this.add.text(30, 20, 'Merge MVP', { color: '#f8fafc', fontSize: '28px' });
-    this.goldText = this.add.text(280, 20, '', { color: '#fbbf24', fontSize: '24px' });
-    this.dustText = this.add.text(470, 20, '', { color: '#a78bfa', fontSize: '24px' });
+    this.add.rectangle(this.scale.width * 0.5, 48, this.scale.width - 40, 72, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
+    this.add.text(32, 28, localizationManager.t('merge.title'), { color: '#f8fafc', fontSize: '30px' });
+    this.goldText = this.add.text(260, 28, '', { color: '#fbbf24', fontSize: '24px' });
+    this.dustText = this.add.text(460, 28, '', { color: '#a78bfa', fontSize: '24px' });
     this.toastText = this.add
-      .text(this.scale.width / 2, 70, '', {
-        color: '#fecaca',
+      .text(this.scale.width / 2, 84, '', {
+        color: '#e2e8f0',
         fontSize: '20px',
-        backgroundColor: '#7f1d1d',
-        padding: { x: 8, y: 6 },
+        backgroundColor: '#334155',
+        padding: { x: 12, y: 7 },
       })
       .setOrigin(0.5)
       .setDepth(100)
@@ -129,42 +150,38 @@ export class MergeScene extends Phaser.Scene {
             GRID_CELL_SIZE - 4,
             0x1f2937,
           )
-          .setStrokeStyle(2, 0x374151);
+          .setStrokeStyle(2, 0x475569);
       }
     }
 
-    const buttonStyle = {
-      color: '#d1fae5',
-      fontSize: '20px',
-      backgroundColor: '#064e3b',
-      padding: { x: 8, y: 4 },
-    };
-    this.add
-      .text(60, 705, 'В меню', buttonStyle)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('MenuScene'));
-    this.add
-      .text(190, 705, 'В хутор', buttonStyle)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('HutScene'));
-    this.add
-      .text(320, 705, 'В рейд', buttonStyle)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.scene.start('RaidScene'));
-    this.add
-      .text(450, 705, 'Заряд генератора (rewarded)', {
-        ...buttonStyle,
-        color: '#e9d5ff',
-        backgroundColor: '#4c1d95',
-      })
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => {
-        void adsManager.showRewarded('merge_generator_charge', () => {
-          this.grantRewardedGeneratorCharge();
-        });
+    const navY = 705;
+    this.makeButton(100, navY, localizationManager.t('common.backToMenu'), () => this.scene.start('MenuScene'));
+    this.makeButton(255, navY, localizationManager.t('common.toHut'), () => this.scene.start('HutScene'));
+    this.makeButton(410, navY, localizationManager.t('common.toRaid'), () => this.scene.start('RaidScene'));
+    this.makeButton(735, navY, localizationManager.t('merge.rewardedCharge'), () => {
+      void adsManager.showRewarded('merge_generator_charge', () => {
+        this.grantRewardedGeneratorCharge();
       });
+    }, 440, 0x4c1d95, 0xe9d5ff);
 
     this.refreshHud();
+  }
+
+  private makeButton(
+    x: number,
+    y: number,
+    label: string,
+    onClick: () => void,
+    width = 140,
+    bgColor = 0x14532d,
+    textColor = 0xecfeff,
+  ): void {
+    const button = this.add
+      .rectangle(x, y, width, 54, bgColor, 0.98)
+      .setStrokeStyle(2, 0x86efac)
+      .setInteractive({ useHandCursor: true });
+    this.add.text(x, y, label, { color: Phaser.Display.Color.IntegerToColor(textColor).rgba, fontSize: '20px' }).setOrigin(0.5);
+    button.on('pointerup', onClick);
   }
 
   private async restoreOrSeedBoard(): Promise<void> {
@@ -182,7 +199,7 @@ export class MergeScene extends Phaser.Scene {
         }
         const runtimeId = crypto.randomUUID();
         this.grid.set({ row: cell.row, col: cell.col }, runtimeId);
-        this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, item, { row: cell.row, col: cell.col }, GRID_ORIGIN));
+        this.addRuntimeItem(runtimeId, item, { row: cell.row, col: cell.col });
       });
       this.refreshHud();
       return;
@@ -214,11 +231,11 @@ export class MergeScene extends Phaser.Scene {
       const runtimeId = this.grid.get(free);
       const item = this.itemsById.get(itemId);
       if (runtimeId && item) {
-        this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, item, free, GRID_ORIGIN));
+        this.addRuntimeItem(runtimeId, item, free);
       }
     }
 
-    this.showToast(`Рейд: +${this.pendingRaidReward.gold} золота, +${this.pendingRaidReward.dust} пыли`);
+    this.showToast(localizationManager.t('merge.raidReward', { gold: this.pendingRaidReward.gold, dust: this.pendingRaidReward.dust }));
     this.pendingRaidReward = null;
     this.refreshHud();
     await this.persistState('raid_reward_claim');
@@ -288,16 +305,13 @@ export class MergeScene extends Phaser.Scene {
       this.grid.clear(entity.position);
       this.grid.clear(targetEntity.position);
 
-      entity.destroy();
-      targetEntity.destroy();
-      this.runtimeItems.delete(entity.runtimeId);
-      this.runtimeItems.delete(targetEntity.runtimeId);
+      this.removeRuntimeEntity(entity);
+      this.removeRuntimeEntity(targetEntity);
 
       const mergedRuntimeId = crypto.randomUUID();
       this.grid.set(dropCell, mergedRuntimeId);
-      const merged = new ItemEntity(this, mergedRuntimeId, next, dropCell, GRID_ORIGIN);
+      const merged = this.addRuntimeItem(mergedRuntimeId, next, dropCell);
       merged.setDepth(3);
-      this.runtimeItems.set(mergedRuntimeId, merged);
       this.tweens.add({ targets: [merged.sprite, merged.label], scale: { from: 1.25, to: 1 }, duration: 180 });
 
       this.questEngine.onEvent('merge_done', 1);
@@ -316,7 +330,7 @@ export class MergeScene extends Phaser.Scene {
       const generator = entity.item.generator;
       const hasCharge = this.generators.spendCharge(entity.runtimeId, generator);
       if (!hasCharge) {
-        this.showToast('Генератор перезаряжается...');
+        this.showToast(localizationManager.t('merge.generatorCooldown'));
         return;
       }
 
@@ -324,7 +338,7 @@ export class MergeScene extends Phaser.Scene {
       if (!spawnTarget) {
         const overflow = this.overflowPolicy.resolveNoSpace();
         this.dust += overflow.grantedDust;
-        this.showToast(`Нет места: +${overflow.grantedDust} пыли`);
+        this.showToast(localizationManager.t('merge.overflow', { dust: overflow.grantedDust }));
         this.refreshHud();
         void this.persistState('overflow');
         return;
@@ -339,7 +353,7 @@ export class MergeScene extends Phaser.Scene {
       if (!runtimeId) {
         return;
       }
-      this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, produced, spawnTarget, GRID_ORIGIN));
+      this.addRuntimeItem(runtimeId, produced, spawnTarget);
       this.questEngine.onEvent('generator_spawn', 1);
       this.showToast(`+ ${produced.name}`);
       this.refreshHud();
@@ -347,6 +361,18 @@ export class MergeScene extends Phaser.Scene {
     });
   }
 
+  private addRuntimeItem(runtimeId: string, item: ItemDefinition, position: GridPosition): ItemEntity {
+    const entity = new ItemEntity(this, runtimeId, item, position, GRID_ORIGIN);
+    this.runtimeItems.set(runtimeId, entity);
+    this.entityBySprite.set(entity.sprite, entity);
+    return entity;
+  }
+
+  private removeRuntimeEntity(entity: ItemEntity): void {
+    this.entityBySprite.delete(entity.sprite);
+    this.runtimeItems.delete(entity.runtimeId);
+    entity.destroy();
+  }
 
   private grantRewardedGeneratorCharge(): void {
     const flags = remoteConfigManager.getFlags();
@@ -366,7 +392,11 @@ export class MergeScene extends Phaser.Scene {
       }
     });
 
-    this.showToast(granted > 0 ? `Rewarded: +${granted} зарядов` : 'Генераторы уже заряжены');
+    this.showToast(
+      granted > 0
+        ? localizationManager.t('merge.rewardedCharges', { value: granted })
+        : localizationManager.t('merge.generatorsFull'),
+    );
     this.refreshHud();
     void this.persistState('rewarded_generator_charge');
   }
@@ -384,17 +414,12 @@ export class MergeScene extends Phaser.Scene {
     }
     const runtimeId = crypto.randomUUID();
     this.grid.set(free, runtimeId);
-    this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, item, free, GRID_ORIGIN));
+    this.addRuntimeItem(runtimeId, item, free);
     return true;
   }
 
   private findEntityBySprite(target: Phaser.GameObjects.GameObject): ItemEntity | null {
-    for (const entity of this.runtimeItems.values()) {
-      if (entity.sprite === target) {
-        return entity;
-      }
-    }
-    return null;
+    return this.entityBySprite.get(target) ?? null;
   }
 
   private cellFromWorld(x: number, y: number): GridPosition | null {
@@ -412,8 +437,65 @@ export class MergeScene extends Phaser.Scene {
   }
 
   private refreshHud(): void {
-    this.goldText.setText(`Золото: ${this.gold}`);
-    this.dustText.setText(`Пыль: ${this.dust}`);
+    this.goldText.setText(localizationManager.t('merge.gold', { value: this.gold }));
+    this.dustText.setText(localizationManager.t('merge.dust', { value: this.dust }));
+  }
+
+  private tryStartTutorial(): void {
+    if (settingsManager.getState().tutorialCompleted) {
+      return;
+    }
+
+    this.tutorialOverlay = this.add.rectangle(this.scale.width * 0.5, this.scale.height * 0.5, this.scale.width, this.scale.height, 0x020617, 0.7).setDepth(200);
+    this.tutorialFrame = this.add.rectangle(0, 0, 100, 100, 0x000000, 0).setStrokeStyle(4, 0xfde68a).setDepth(201);
+    this.tutorialText = this.add.text(this.scale.width * 0.5, 560, '', {
+      color: '#f8fafc',
+      fontSize: '28px',
+      align: 'center',
+      backgroundColor: '#1e293b',
+      padding: { x: 14, y: 10 },
+      wordWrap: { width: 980 },
+    }).setOrigin(0.5).setDepth(202);
+
+    this.tutorialButton = this.add.rectangle(this.scale.width * 0.5, 650, 220, 64, 0x14532d, 0.98)
+      .setStrokeStyle(2, 0x86efac)
+      .setDepth(202)
+      .setInteractive({ useHandCursor: true });
+    this.tutorialButtonLabel = this.add.text(this.scale.width * 0.5, 650, '', {
+      color: '#ecfeff',
+      fontSize: '28px',
+    }).setOrigin(0.5).setDepth(203);
+
+    this.tutorialButton.on('pointerup', () => {
+      this.tutorialStep += 1;
+      if (this.tutorialStep >= TUTORIAL_STEPS.length) {
+        settingsManager.setTutorialCompleted(true);
+        this.destroyTutorial();
+        return;
+      }
+      this.renderTutorialStep();
+    });
+
+    this.renderTutorialStep();
+  }
+
+  private renderTutorialStep(): void {
+    const step = TUTORIAL_STEPS[this.tutorialStep];
+    this.tutorialFrame?.setPosition(step.x, step.y).setSize(step.w, step.h);
+    this.tutorialText?.setText(localizationManager.t(step.textKey));
+    this.tutorialButtonLabel?.setText(
+      this.tutorialStep === TUTORIAL_STEPS.length - 1
+        ? localizationManager.t('merge.tutorial.done')
+        : localizationManager.t('merge.tutorial.next'),
+    );
+  }
+
+  private destroyTutorial(): void {
+    this.tutorialOverlay?.destroy();
+    this.tutorialFrame?.destroy();
+    this.tutorialText?.destroy();
+    this.tutorialButton?.destroy();
+    this.tutorialButtonLabel?.destroy();
   }
 
   private buildSaveState(): SaveState {
