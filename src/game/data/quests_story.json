@@ -1,0 +1,122 @@
+[
+  {
+    "id": "story_01",
+    "chapterId": "chapter_1",
+    "title": "Первый дым",
+    "description": "Разожги жизнь хутора",
+    "rewards": { "gold": 20, "dust": 5 },
+    "steps": [
+      { "id": "s1_1", "description": "Сделай 1 merge", "objective": { "event": "merge_done", "target": 1 } }
+    ]
+  },
+  {
+    "id": "story_02",
+    "chapterId": "chapter_1",
+    "title": "Тёплый вечер",
+    "description": "Подкрепи запасы",
+    "rewards": { "gold": 25, "dust": 8 },
+    "steps": [
+      { "id": "s2_1", "description": "Собери 4 предмета из генератора", "objective": { "event": "generator_spawn", "target": 4 } }
+    ]
+  },
+  {
+    "id": "story_03",
+    "chapterId": "chapter_1",
+    "title": "Дозор",
+    "description": "Отправься в первый рейд",
+    "rewards": { "gold": 30, "dust": 10 },
+    "steps": [
+      { "id": "s3_1", "description": "Заверши 1 рейд", "objective": { "event": "raid_complete", "target": 1 } }
+    ]
+  },
+  {
+    "id": "story_04",
+    "chapterId": "chapter_2",
+    "title": "Мастер слияний",
+    "description": "Укрепи ремесло",
+    "rewards": { "gold": 40, "dust": 12 },
+    "steps": [
+      { "id": "s4_1", "description": "Сделай 6 merge", "objective": { "event": "merge_done", "target": 6 } }
+    ]
+  },
+  {
+    "id": "story_05",
+    "chapterId": "chapter_2",
+    "title": "Стабильный огонь",
+    "description": "Используй генератор на полную",
+    "rewards": { "gold": 45, "dust": 14 },
+    "steps": [
+      { "id": "s5_1", "description": "Собери 10 предметов из генератора", "objective": { "event": "generator_spawn", "target": 10 } }
+    ]
+  },
+  {
+    "id": "story_06",
+    "chapterId": "chapter_2",
+    "title": "Победный вылаз",
+    "description": "Победи в рейде",
+    "rewards": { "gold": 55, "dust": 16 },
+    "steps": [
+      { "id": "s6_1", "description": "Выиграй 1 рейд", "objective": { "event": "raid_win", "target": 1 } }
+    ]
+  },
+  {
+    "id": "story_07",
+    "chapterId": "chapter_3",
+    "title": "Архитектор",
+    "description": "Развивай хутор",
+    "rewards": { "gold": 60, "dust": 20 },
+    "steps": [
+      { "id": "s7_1", "description": "Купи 1 апгрейд хутора", "objective": { "event": "hut_upgrade", "target": 1 } }
+    ]
+  },
+  {
+    "id": "story_08",
+    "chapterId": "chapter_3",
+    "title": "Глубокий склад",
+    "description": "Подготовь ресурсы",
+    "rewards": { "gold": 70, "dust": 22 },
+    "steps": [
+      { "id": "s8_1", "description": "Сделай 12 merge", "objective": { "event": "merge_done", "target": 12 } }
+    ]
+  },
+  {
+    "id": "story_09",
+    "chapterId": "chapter_3",
+    "title": "Частые вылазки",
+    "description": "Закрепи успех",
+    "rewards": { "gold": 75, "dust": 24 },
+    "steps": [
+      { "id": "s9_1", "description": "Заверши 3 рейда", "objective": { "event": "raid_complete", "target": 3 } }
+    ]
+  },
+  {
+    "id": "story_10",
+    "chapterId": "chapter_4",
+    "title": "Сердце хутора",
+    "description": "Собери сильную базу",
+    "rewards": { "gold": 90, "dust": 30 },
+    "steps": [
+      { "id": "s10_1", "description": "Купи 3 апгрейда", "objective": { "event": "hut_upgrade", "target": 3 } }
+    ]
+  },
+  {
+    "id": "story_11",
+    "chapterId": "chapter_4",
+    "title": "Лесной ритм",
+    "description": "Держи поток дерева",
+    "rewards": { "gold": 95, "dust": 30 },
+    "steps": [
+      { "id": "s11_1", "description": "Собери 20 предметов генератора", "objective": { "event": "generator_spawn", "target": 20 } }
+    ]
+  },
+  {
+    "id": "story_12",
+    "chapterId": "chapter_4",
+    "title": "Безупречная оборона",
+    "description": "Победи уверенно",
+    "rewards": { "gold": 110, "dust": 35 },
+    "steps": [
+      { "id": "s12_1", "description": "Выиграй 3 рейда", "objective": { "event": "raid_win", "target": 3 } }
+    ]
+  }
+]

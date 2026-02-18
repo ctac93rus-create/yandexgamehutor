@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
 
 import economyJson from '../data/economy.json';
+import dailyJson from '../data/quests_daily.json';
+import storyJson from '../data/quests_story.json';
 import enemiesJson from '../data/enemies.json';
 import wavesJson from '../data/waves.json';
 import { saveManager } from '../managers/SaveManager';
 import { sdkManager } from '../managers/SDKManager';
 import { economySchema } from '../systems/merge/schema';
+import { QuestEngine } from '../systems/quests/QuestEngine';
 import { Defender } from '../systems/raid/Defender';
 import { Enemy } from '../systems/raid/Enemy';
 import { RaidController } from '../systems/raid/RaidController';
@@ -153,7 +156,13 @@ export class RaidScene extends Phaser.Scene {
     const reward = this.rewardCalculator.calculate(result, doubled);
     const save = await saveManager.load();
     if (save) {
-      await saveManager.save(save);
+      const meta = save.meta ?? QuestEngine.defaultState();
+      const questEngine = new QuestEngine(meta, storyJson, dailyJson);
+      questEngine.onEvent('raid_complete', 1);
+      if (result.win) {
+        questEngine.onEvent('raid_win', 1);
+      }
+      await saveManager.save({ ...save, meta: questEngine.getState() });
     }
 
     this.scene.start('MergeScene', {

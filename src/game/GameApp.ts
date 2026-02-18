@@ -4,6 +4,7 @@ import { AudioManager } from './managers/AudioManager';
 import { sdkManager } from './managers/SDKManager';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
+import { HutScene } from './scenes/HutScene';
 import { MergeScene } from './scenes/MergeScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { RaidScene } from './scenes/RaidScene';
@@ -33,7 +34,7 @@ export class GameApp {
         PreloadScene,
         MenuScene,
         MergeScene,
-        new WipScene('HutScene', 'Хутор'),
+        HutScene,
         RaidScene,
         new WipScene('SettingsScene', 'Настройки'),
       ],

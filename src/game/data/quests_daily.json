@@ -1,0 +1,37 @@
+[
+  {
+    "id": "daily_merge_3",
+    "title": "Слепи набор",
+    "description": "Сделай 3 merge",
+    "objective": { "event": "merge_done", "target": 3 },
+    "rewards": { "gold": 15, "dust": 5 }
+  },
+  {
+    "id": "daily_merge_6",
+    "title": "Быстрый мастер",
+    "description": "Сделай 6 merge",
+    "objective": { "event": "merge_done", "target": 6 },
+    "rewards": { "gold": 25, "dust": 7 }
+  },
+  {
+    "id": "daily_generator_5",
+    "title": "Топливо",
+    "description": "Собери 5 предметов из генератора",
+    "objective": { "event": "generator_spawn", "target": 5 },
+    "rewards": { "gold": 18, "dust": 6 }
+  },
+  {
+    "id": "daily_raid_1",
+    "title": "Разведка",
+    "description": "Заверши 1 рейд",
+    "objective": { "event": "raid_complete", "target": 1 },
+    "rewards": { "gold": 20, "dust": 6 }
+  },
+  {
+    "id": "daily_raid_win",
+    "title": "Триумф",
+    "description": "Выиграй 1 рейд",
+    "objective": { "event": "raid_win", "target": 1 },
+    "rewards": { "gold": 28, "dust": 8 }
+  }
+]

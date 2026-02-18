@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import chainsJson from '../data/merge_chains.json';
 import economyJson from '../data/economy.json';
 import itemsJson from '../data/items.json';
+import dailyJson from '../data/quests_daily.json';
+import storyJson from '../data/quests_story.json';
 import { saveManager } from '../managers/SaveManager';
 import { Generators } from '../systems/merge/Generators';
 import { GRID_CELL_SIZE, ItemEntity } from '../systems/merge/ItemEntity';
@@ -11,7 +13,9 @@ import { MergeGrid } from '../systems/merge/MergeGrid';
 import { MergeResolver } from '../systems/merge/MergeResolver';
 import { OverflowPolicy } from '../systems/merge/OverflowPolicy';
 import { economySchema, itemsSchema, mergeChainsSchema } from '../systems/merge/schema';
-import type { EconomyConfig, GridPosition, ItemDefinition } from '../systems/merge/types';
+import type { EconomyConfig, GridPosition, ItemDefinition, SaveState } from '../systems/merge/types';
+import { QuestEngine } from '../systems/quests/QuestEngine';
+import type { MetaProgressState } from '../systems/quests/types';
 import type { RaidReward } from '../systems/raid/RewardCalculator';
 
 const GRID_ROWS = 6;
@@ -34,6 +38,8 @@ export class MergeScene extends Phaser.Scene {
 
   private gold = 0;
   private dust = 0;
+  private meta!: MetaProgressState;
+  private questEngine!: QuestEngine;
   private pendingRaidReward: RaidReward | null = null;
 
   private goldText!: Phaser.GameObjects.Text;
@@ -151,6 +157,8 @@ export class MergeScene extends Phaser.Scene {
     if (save) {
       this.gold = save.gold;
       this.dust = save.dust;
+      this.meta = save.meta ?? QuestEngine.defaultState();
+      this.questEngine = new QuestEngine(this.meta, storyJson, dailyJson);
       this.generators.importState(save.generators);
       save.occupiedCells.forEach((cell) => {
         const item = this.itemsById.get(cell.itemId);
@@ -165,6 +173,8 @@ export class MergeScene extends Phaser.Scene {
       return;
     }
 
+    this.meta = QuestEngine.defaultState();
+    this.questEngine = new QuestEngine(this.meta, storyJson, dailyJson);
     this.spawnItemById('campfire');
     this.spawnItemById('twig');
     this.spawnItemById('twig');
@@ -275,6 +285,7 @@ export class MergeScene extends Phaser.Scene {
       this.runtimeItems.set(mergedRuntimeId, merged);
       this.tweens.add({ targets: [merged.sprite, merged.label], scale: { from: 1.25, to: 1 }, duration: 180 });
 
+      this.questEngine.onEvent('merge_done', 1);
       this.showToast(`Merge: ${next.name}`);
       this.refreshHud();
       void this.persistState('merge');
@@ -314,6 +325,7 @@ export class MergeScene extends Phaser.Scene {
         return;
       }
       this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, produced, spawnTarget, GRID_ORIGIN));
+      this.questEngine.onEvent('generator_spawn', 1);
       this.showToast(`+ ${produced.name}`);
       this.refreshHud();
       void this.persistState('generator_spawn');
@@ -365,8 +377,8 @@ export class MergeScene extends Phaser.Scene {
     this.dustText.setText(`Пыль: ${this.dust}`);
   }
 
-  private async persistState(_reason: string): Promise<void> {
-    await saveManager.save({
+  private buildSaveState(): SaveState {
+    return {
       gold: this.gold,
       dust: this.dust,
       occupiedCells: this.grid.occupiedCells().map((cell) => {
@@ -378,6 +390,11 @@ export class MergeScene extends Phaser.Scene {
         };
       }),
       generators: this.generators.exportState(),
-    });
+      meta: this.questEngine.getState(),
+    };
+  }
+
+  private async persistState(_reason: string): Promise<void> {
+    await saveManager.save(this.buildSaveState());
   }
 }
