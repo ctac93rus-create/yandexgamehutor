@@ -28,7 +28,7 @@ export interface LeaderboardEntriesResponse {
   entries: LeaderboardEntry[];
 }
 
-export interface Leaderboards {
+export interface LeaderboardsService {
   setLeaderboardScore(leaderboardName: string, score: number): Promise<void>;
   getLeaderboardPlayerEntry(leaderboardName: string): Promise<LeaderboardEntry | null>;
   getLeaderboardEntries(
@@ -57,7 +57,13 @@ export interface YandexSDK {
   getFlags(input: { defaultFlags: Record<string, unknown> }): Promise<Record<string, unknown>>;
   getPlayer(): Promise<YandexPlayer>;
   getPayments(): Promise<YandexPayments>;
-  getLeaderboards(): Promise<Leaderboards>;
+  leaderboards?: LeaderboardsService;
+  /** @deprecated Use ysdk.leaderboards when available. */
+  getLeaderboards?(): Promise<LeaderboardsService>;
+  auth?: {
+    openAuthDialog(): Promise<void>;
+  };
+  isAvailableMethod?(methodName: string): boolean;
   on(event: YandexEvent, callback: () => void): void;
   off(event: YandexEvent, callback: () => void): void;
 }

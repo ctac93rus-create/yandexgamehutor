@@ -38,11 +38,11 @@ describe('SDKManager', () => {
           getPurchases: async () => [],
           consumePurchase: async () => undefined,
         }),
-        getLeaderboards: async () => ({
+        leaderboards: {
           setLeaderboardScore: async () => undefined,
           getLeaderboardPlayerEntry: async () => null,
           getLeaderboardEntries: async () => ({ entries: [] }),
-        }),
+        },
         on: () => undefined,
         off: () => undefined,
       }),
@@ -54,5 +54,112 @@ describe('SDKManager', () => {
     manager.loadingReadyOnce();
 
     expect(ready).toHaveBeenCalledTimes(1);
+  });
+
+  it('getLeaderboardsService uses ysdk.leaderboards when present', async () => {
+    const leaderboards = {
+      setLeaderboardScore: vi.fn(),
+      getLeaderboardPlayerEntry: vi.fn(),
+      getLeaderboardEntries: vi.fn(),
+    };
+
+    (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames = {
+      init: async () => ({
+        features: { LoadingAPI: { ready: vi.fn() } },
+        adv: { showFullscreenAdv: vi.fn(), showRewardedVideo: vi.fn() },
+        getFlags: async ({ defaultFlags }) => defaultFlags,
+        getPlayer: async () => ({
+          getData: async () => ({}),
+          setData: async () => undefined,
+          getStats: async () => ({}),
+          setStats: async () => undefined,
+          incrementStats: async () => ({}),
+        }),
+        getPayments: async () => ({
+          getCatalog: async () => ({ products: [] }),
+          purchase: async () => ({ id: 'x', purchaseToken: 't' }),
+          getPurchases: async () => [],
+          consumePurchase: async () => undefined,
+        }),
+        leaderboards,
+        getLeaderboards: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+      }),
+    };
+
+    const manager = new SDKManager();
+    await manager.init();
+
+    await expect(manager.getLeaderboardsService()).resolves.toBe(leaderboards);
+  });
+
+  it('getLeaderboardsService uses getLeaderboards fallback', async () => {
+    const leaderboards = {
+      setLeaderboardScore: vi.fn(),
+      getLeaderboardPlayerEntry: vi.fn(),
+      getLeaderboardEntries: vi.fn(),
+    };
+    const getLeaderboards = vi.fn().mockResolvedValue(leaderboards);
+
+    (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames = {
+      init: async () => ({
+        features: { LoadingAPI: { ready: vi.fn() } },
+        adv: { showFullscreenAdv: vi.fn(), showRewardedVideo: vi.fn() },
+        getFlags: async ({ defaultFlags }) => defaultFlags,
+        getPlayer: async () => ({
+          getData: async () => ({}),
+          setData: async () => undefined,
+          getStats: async () => ({}),
+          setStats: async () => undefined,
+          incrementStats: async () => ({}),
+        }),
+        getPayments: async () => ({
+          getCatalog: async () => ({ products: [] }),
+          purchase: async () => ({ id: 'x', purchaseToken: 't' }),
+          getPurchases: async () => [],
+          consumePurchase: async () => undefined,
+        }),
+        getLeaderboards,
+        on: vi.fn(),
+        off: vi.fn(),
+      }),
+    };
+
+    const manager = new SDKManager();
+    await manager.init();
+
+    await expect(manager.getLeaderboardsService()).resolves.toBe(leaderboards);
+    expect(getLeaderboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('getLeaderboardsService returns null when API is unavailable', async () => {
+    (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames = {
+      init: async () => ({
+        features: { LoadingAPI: { ready: vi.fn() } },
+        adv: { showFullscreenAdv: vi.fn(), showRewardedVideo: vi.fn() },
+        getFlags: async ({ defaultFlags }) => defaultFlags,
+        getPlayer: async () => ({
+          getData: async () => ({}),
+          setData: async () => undefined,
+          getStats: async () => ({}),
+          setStats: async () => undefined,
+          incrementStats: async () => ({}),
+        }),
+        getPayments: async () => ({
+          getCatalog: async () => ({ products: [] }),
+          purchase: async () => ({ id: 'x', purchaseToken: 't' }),
+          getPurchases: async () => [],
+          consumePurchase: async () => undefined,
+        }),
+        on: vi.fn(),
+        off: vi.fn(),
+      }),
+    };
+
+    const manager = new SDKManager();
+    await manager.init();
+
+    await expect(manager.getLeaderboardsService()).resolves.toBeNull();
   });
 });

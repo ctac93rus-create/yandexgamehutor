@@ -20,10 +20,18 @@ export class AchievementsManager {
 
       const current = await player.getStats();
       const next = { ...current };
+      let hasUpdates = false;
       for (let i = 0; i < newlyUnlocked.length; i += 1) {
-        next[`achievement_${newlyUnlocked[i]}`] = 1;
+        const key = `achievement_${newlyUnlocked[i]}`;
+        if (next[key] !== 1) {
+          next[key] = 1;
+          hasUpdates = true;
+        }
       }
-      await player.setStats(next);
+
+      if (hasUpdates) {
+        await player.setStats(next);
+      }
     } catch {
       // best-effort cloud sync
     }

@@ -81,7 +81,9 @@
     "anonymous": "Игрок",
     "refresh": "Обновить",
     "locked": "Закрыто",
-    "unlocked": "Открыто"
+    "unlocked": "Открыто",
+    "authRequired": "Авторизуйтесь, чтобы попасть в лидерборд",
+    "signIn": "Войти"
   },
   "achievements": {
     "unlockedToast": "Достижение: {{title}}",
