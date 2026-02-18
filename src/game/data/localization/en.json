@@ -81,7 +81,9 @@
     "anonymous": "Player",
     "refresh": "Refresh",
     "locked": "Locked",
-    "unlocked": "Unlocked"
+    "unlocked": "Unlocked",
+    "authRequired": "Sign in to participate in leaderboard",
+    "signIn": "Sign in"
   },
   "achievements": {
     "unlockedToast": "Achievement unlocked: {{title}}",

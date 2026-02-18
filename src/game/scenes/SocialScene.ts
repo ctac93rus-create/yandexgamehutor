@@ -5,6 +5,7 @@ import { leaderboardsManager, RAID_BEST_KILLS_LEADERBOARD } from '../managers/Le
 import { saveManager } from '../managers/SaveManager';
 import { ACHIEVEMENTS, isAchievementUnlocked, unlockAchievements } from '../systems/meta/achievements';
 import { QuestEngine } from '../systems/quests/QuestEngine';
+import { sdkManager } from '../managers/SDKManager';
 
 interface SocialSceneData {
   tab?: 'leaderboard' | 'achievements';
@@ -14,6 +15,8 @@ export class SocialScene extends Phaser.Scene {
   private activeTab: 'leaderboard' | 'achievements' = 'leaderboard';
   private content!: Phaser.GameObjects.Container;
   private statusText!: Phaser.GameObjects.Text;
+  private authButton?: Phaser.GameObjects.Rectangle;
+  private authLabel?: Phaser.GameObjects.Text;
 
   public constructor() {
     super('SocialScene');
@@ -47,6 +50,7 @@ export class SocialScene extends Phaser.Scene {
   private async renderActiveTab(): Promise<void> {
     this.content.removeAll(true);
     this.statusText.setText('');
+    this.hideAuthButton();
 
     if (this.activeTab === 'leaderboard') {
       await this.renderLeaderboard();
@@ -61,7 +65,10 @@ export class SocialScene extends Phaser.Scene {
     const bestScore = save?.meta?.stats.bestRaidKills ?? 0;
     const leaderboard = await leaderboardsManager.fetchTopAndPlayer(RAID_BEST_KILLS_LEADERBOARD);
 
-    if (leaderboard.entries.length === 0 && !leaderboard.player) {
+    if (leaderboard.status === 'auth_required') {
+      this.statusText.setText(localizationManager.t('social.authRequired'));
+      this.showAuthButton();
+    } else if (leaderboard.status === 'unavailable') {
       this.statusText.setText(localizationManager.t('social.leaderboardUnavailable'));
     }
 
@@ -134,6 +141,38 @@ export class SocialScene extends Phaser.Scene {
           fontSize: '20px',
         }).setOrigin(1, 0.5),
       );
+    }
+  }
+
+  private showAuthButton(): void {
+    if (this.authButton && this.authLabel) {
+      this.authButton.setVisible(true).setActive(true);
+      this.authLabel.setVisible(true).setActive(true);
+      return;
+    }
+
+    this.authButton = this.add
+      .rectangle(1040, 290, 220, 56, 0x0f766e, 0.98)
+      .setStrokeStyle(2, 0x5eead4)
+      .setInteractive({ useHandCursor: true });
+    this.authLabel = this.add.text(1040, 290, localizationManager.t('social.signIn'), { color: '#ecfeff', fontSize: '22px' }).setOrigin(0.5);
+
+    this.authButton.on('pointerup', () => {
+      void this.handleAuthClick();
+    });
+
+    this.content.add([this.authButton, this.authLabel]);
+  }
+
+  private hideAuthButton(): void {
+    this.authButton?.setVisible(false).setActive(false);
+    this.authLabel?.setVisible(false).setActive(false);
+  }
+
+  private async handleAuthClick(): Promise<void> {
+    const authorized = await sdkManager.openAuthDialog();
+    if (authorized) {
+      void this.renderActiveTab();
     }
   }
 

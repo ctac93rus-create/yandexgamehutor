@@ -1,7 +1,7 @@
 import type {
   AdvCallbacks,
   YandexEvent,
-  Leaderboards,
+  LeaderboardsService,
   YandexPayments,
   YandexPlayer,
   YandexSDK,
@@ -31,12 +31,45 @@ export class SDKManager {
   }
 
 
-  public async getLeaderboards(): Promise<Leaderboards | null> {
+  public async getLeaderboardsService(): Promise<LeaderboardsService | null> {
     if (!this.ysdk) {
       return null;
     }
 
-    return this.ysdk.getLeaderboards();
+    if (this.ysdk.leaderboards) {
+      return this.ysdk.leaderboards;
+    }
+
+    if (this.ysdk.getLeaderboards) {
+      return this.ysdk.getLeaderboards();
+    }
+
+    return null;
+  }
+
+  public async getLeaderboards(): Promise<LeaderboardsService | null> {
+    return this.getLeaderboardsService();
+  }
+
+  public async isAvailable(methodName: string): Promise<boolean> {
+    if (!this.ysdk?.isAvailableMethod) {
+      return true;
+    }
+
+    return this.ysdk.isAvailableMethod(methodName);
+  }
+
+  public async openAuthDialog(): Promise<boolean> {
+    if (!this.ysdk?.auth?.openAuthDialog) {
+      return false;
+    }
+
+    try {
+      await this.ysdk.auth.openAuthDialog();
+      return true;
+    } catch {
+      return false;
+    }
   }
   public async getPayments(): Promise<YandexPayments | null> {
     if (!this.ysdk) {
@@ -102,6 +135,12 @@ export class SDKManager {
     const playerData: Record<string, unknown> = {};
     const playerStats: Record<string, number> = {};
 
+    const leaderboardsService: LeaderboardsService = {
+      setLeaderboardScore: async () => undefined,
+      getLeaderboardPlayerEntry: async () => null,
+      getLeaderboardEntries: async () => ({ entries: [] }),
+    };
+
     return {
       features: {
         LoadingAPI: {
@@ -142,11 +181,12 @@ export class SDKManager {
         getPurchases: async () => [],
         consumePurchase: async () => undefined,
       }),
-      getLeaderboards: async () => ({
-        setLeaderboardScore: async () => undefined,
-        getLeaderboardPlayerEntry: async () => null,
-        getLeaderboardEntries: async () => ({ entries: [] }),
-      }),
+      leaderboards: leaderboardsService,
+      getLeaderboards: async () => leaderboardsService,
+      auth: {
+        openAuthDialog: async () => undefined,
+      },
+      isAvailableMethod: () => true,
       on: (event, callback) => {
         if (!listeners.has(event)) {
           listeners.set(event, new Set());
