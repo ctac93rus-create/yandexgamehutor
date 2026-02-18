@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
+import chainsJson from '../data/merge_chains.json';
 import economyJson from '../data/economy.json';
 import itemsJson from '../data/items.json';
-import chainsJson from '../data/merge_chains.json';
 import { saveManager } from '../managers/SaveManager';
 import { Generators } from '../systems/merge/Generators';
 import { GRID_CELL_SIZE, ItemEntity } from '../systems/merge/ItemEntity';
@@ -10,16 +10,17 @@ import { Inventory } from '../systems/merge/Inventory';
 import { MergeGrid } from '../systems/merge/MergeGrid';
 import { MergeResolver } from '../systems/merge/MergeResolver';
 import { OverflowPolicy } from '../systems/merge/OverflowPolicy';
-import {
-  economySchema,
-  itemsSchema,
-  mergeChainsSchema,
-} from '../systems/merge/schema';
+import { economySchema, itemsSchema, mergeChainsSchema } from '../systems/merge/schema';
 import type { EconomyConfig, GridPosition, ItemDefinition } from '../systems/merge/types';
+import type { RaidReward } from '../systems/raid/RewardCalculator';
 
 const GRID_ROWS = 6;
 const GRID_COLS = 7;
 const GRID_ORIGIN = { x: 60, y: 110 };
+
+interface MergeSceneData {
+  raidReward?: RaidReward;
+}
 
 export class MergeScene extends Phaser.Scene {
   private readonly grid = new MergeGrid(GRID_ROWS, GRID_COLS);
@@ -33,6 +34,7 @@ export class MergeScene extends Phaser.Scene {
 
   private gold = 0;
   private dust = 0;
+  private pendingRaidReward: RaidReward | null = null;
 
   private goldText!: Phaser.GameObjects.Text;
   private dustText!: Phaser.GameObjects.Text;
@@ -42,11 +44,17 @@ export class MergeScene extends Phaser.Scene {
     super('MergeScene');
   }
 
+  public init(data: MergeSceneData): void {
+    this.pendingRaidReward = data.raidReward ?? null;
+  }
+
   public async create(): Promise<void> {
     this.bootstrapData();
     this.drawLayout();
 
     await this.restoreOrSeedBoard();
+    await this.applyPendingRaidReward();
+
     this.bindDragAndDrop();
     this.bindGeneratorTap();
 
@@ -67,7 +75,7 @@ export class MergeScene extends Phaser.Scene {
           }
         });
         if (changed) {
-          this.persistState('generator_refill');
+          void this.persistState('generator_refill');
           this.refreshHud();
         }
       },
@@ -116,10 +124,24 @@ export class MergeScene extends Phaser.Scene {
       }
     }
 
-    const buttonStyle = { color: '#d1fae5', fontSize: '20px', backgroundColor: '#064e3b', padding: { x: 8, y: 4 } };
-    this.add.text(60, 705, 'В меню', buttonStyle).setInteractive({ useHandCursor: true }).on('pointerup', () => this.scene.start('MenuScene'));
-    this.add.text(190, 705, 'В хутор', buttonStyle).setInteractive({ useHandCursor: true }).on('pointerup', () => this.scene.start('HutScene'));
-    this.add.text(320, 705, 'В рейд', buttonStyle).setInteractive({ useHandCursor: true }).on('pointerup', () => this.scene.start('RaidScene'));
+    const buttonStyle = {
+      color: '#d1fae5',
+      fontSize: '20px',
+      backgroundColor: '#064e3b',
+      padding: { x: 8, y: 4 },
+    };
+    this.add
+      .text(60, 705, 'В меню', buttonStyle)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => this.scene.start('MenuScene'));
+    this.add
+      .text(190, 705, 'В хутор', buttonStyle)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => this.scene.start('HutScene'));
+    this.add
+      .text(320, 705, 'В рейд', buttonStyle)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => this.scene.start('RaidScene'));
 
     this.refreshHud();
   }
@@ -137,10 +159,7 @@ export class MergeScene extends Phaser.Scene {
         }
         const runtimeId = crypto.randomUUID();
         this.grid.set({ row: cell.row, col: cell.col }, runtimeId);
-        this.runtimeItems.set(
-          runtimeId,
-          new ItemEntity(this, runtimeId, item, { row: cell.row, col: cell.col }, GRID_ORIGIN),
-        );
+        this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, item, { row: cell.row, col: cell.col }, GRID_ORIGIN));
       });
       this.refreshHud();
       return;
@@ -150,6 +169,34 @@ export class MergeScene extends Phaser.Scene {
     this.spawnItemById('twig');
     this.spawnItemById('twig');
     await this.persistState('seed_board');
+  }
+
+  private async applyPendingRaidReward(): Promise<void> {
+    if (!this.pendingRaidReward) {
+      return;
+    }
+
+    this.gold += this.pendingRaidReward.gold;
+    this.dust += this.pendingRaidReward.dust;
+
+    for (let i = 0; i < this.pendingRaidReward.itemIds.length; i += 1) {
+      const itemId = this.pendingRaidReward.itemIds[i];
+      const free = this.inventory.placeToFreeCell(crypto.randomUUID());
+      if (!free) {
+        this.dust += this.overflowPolicy.resolveNoSpace().grantedDust;
+        continue;
+      }
+      const runtimeId = this.grid.get(free);
+      const item = this.itemsById.get(itemId);
+      if (runtimeId && item) {
+        this.runtimeItems.set(runtimeId, new ItemEntity(this, runtimeId, item, free, GRID_ORIGIN));
+      }
+    }
+
+    this.showToast(`Рейд: +${this.pendingRaidReward.gold} золота, +${this.pendingRaidReward.dust} пыли`);
+    this.pendingRaidReward = null;
+    this.refreshHud();
+    await this.persistState('raid_reward_claim');
   }
 
   private bindDragAndDrop(): void {

@@ -25,10 +25,19 @@ export interface MergeChain {
   tiers: string[];
 }
 
+export interface RaidEconomyConfig {
+  baseGold: number;
+  goldPerKill: number;
+  baseDust: number;
+  dustPerSurvivedHp: number;
+  rewardItems: string[];
+}
+
 export interface EconomyConfig {
   overflowDustPerItem: number;
   startGold: number;
   startDust: number;
+  raid: RaidEconomyConfig;
 }
 
 export interface SaveState {

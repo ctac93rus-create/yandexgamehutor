@@ -1,0 +1,26 @@
+[
+  {
+    "id": "rat",
+    "name": "Крыса",
+    "hp": 26,
+    "speed": 58,
+    "rewardGold": 5,
+    "color": 9474192
+  },
+  {
+    "id": "boar",
+    "name": "Кабан",
+    "hp": 60,
+    "speed": 40,
+    "rewardGold": 10,
+    "color": 5256768
+  },
+  {
+    "id": "shaman",
+    "name": "Шаман",
+    "hp": 42,
+    "speed": 46,
+    "rewardGold": 9,
+    "color": 9374720
+  }
+]
