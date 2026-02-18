@@ -8,18 +8,20 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
+    project: ['./tsconfig.json'],
+    tsconfigRootDir: __dirname,
   },
-  plugins: ['@typescript-eslint', 'import', 'prettier'],
+  plugins: ['@typescript-eslint', 'import'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
-    'plugin:prettier/recommended',
     'prettier',
   ],
   rules: {
-    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
+    'import/no-named-as-default-member': 'off',
     'import/order': [
       'error',
       {

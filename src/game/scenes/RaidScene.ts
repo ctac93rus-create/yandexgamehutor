@@ -80,7 +80,7 @@ export class RaidScene extends Phaser.Scene {
     this.hud.render(this.waves.durationSec, this.baseHp, 0);
   }
 
-  public update(_time: number, deltaMs: number): void {
+  public override update(_time: number, deltaMs: number): void {
     if (this.controller.currentState !== 'running') {
       return;
     }

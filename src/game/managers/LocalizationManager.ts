@@ -2,7 +2,9 @@ import en from '../data/localization/en.json';
 import ru from '../data/localization/ru.json';
 import { settingsManager, type Locale } from './SettingsManager';
 
-type Dictionary = Record<string, string | Dictionary>;
+interface Dictionary {
+  [key: string]: string | Dictionary;
+}
 
 const dictionaries: Record<Locale, Dictionary> = {
   ru,
