@@ -63,6 +63,7 @@ export interface EconomyConfig {
 export interface SaveState {
   gold: number;
   dust: number;
+  updatedAt?: number;
   occupiedCells: Array<{
     row: number;
     col: number;
