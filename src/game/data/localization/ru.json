@@ -1,0 +1,64 @@
+{
+  "common": {
+    "backToMenu": "В меню",
+    "toMerge": "В merge",
+    "toHut": "В хутор",
+    "toRaid": "В рейд",
+    "language": "Язык",
+    "on": "Вкл",
+    "off": "Выкл"
+  },
+  "menu": {
+    "title": "Yandex Game Hutor",
+    "playMerge": "Играть (Merge)",
+    "hut": "Хутор",
+    "raid": "Рейд",
+    "settings": "Настройки"
+  },
+  "settings": {
+    "title": "Настройки",
+    "languageLabel": "Язык интерфейса",
+    "tutorialReset": "Сбросить туториал",
+    "tutorialResetDone": "Туториал будет показан заново",
+    "sfxLabel": "Эффекты"
+  },
+  "merge": {
+    "title": "Merge",
+    "gold": "Золото: {{value}}",
+    "dust": "Пыль: {{value}}",
+    "rewardedCharge": "Заряд генератора (rewarded)",
+    "raidReward": "Рейд: +{{gold}} золота, +{{dust}} пыли",
+    "overflow": "Нет места: +{{dust}} пыли",
+    "generatorCooldown": "Генератор перезаряжается...",
+    "rewardedCharges": "Rewarded: +{{value}} зарядов",
+    "generatorsFull": "Генераторы уже заряжены",
+    "tutorial": {
+      "step1": "Это поле merge. Перетаскивайте предметы по клеткам.",
+      "step2": "Совмещайте одинаковые предметы, чтобы получить более ценные.",
+      "step3": "Тапните по генератору, чтобы получить ресурсы.",
+      "step4": "Нажмите rewarded-кнопку для бесплатной подзарядки.",
+      "step5": "Забирайте награды рейда и развивайте хутор. Удачи!",
+      "next": "Дальше",
+      "done": "Понятно"
+    }
+  },
+  "hut": {
+    "title": "Хутор / Meta",
+    "storyClaimed": "Сюжетная награда получена",
+    "dailyClaimed": "Ежедневка получена",
+    "booster": "Бустер (rewarded)",
+    "buyGold": "Купить золото (IAP)",
+    "purchaseUnavailable": "Покупка недоступна",
+    "purchaseApplied": "Покупка применена",
+    "alreadyBought": "Уже куплено",
+    "notEnough": "Недостаточно ресурсов",
+    "upgradeBought": "Куплен апгрейд: {{title}}"
+  },
+  "raid": {
+    "title": "Рейд",
+    "time": "Время: {{value}}с",
+    "baseHp": "База HP: {{value}}",
+    "cooldown": "КД: {{value}}с",
+    "freeze": "Заморозка"
+  }
+}

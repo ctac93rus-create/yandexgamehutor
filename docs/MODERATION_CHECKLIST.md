@@ -1,26 +1,29 @@
 # MODERATION CHECKLIST
 
-## A. Rewarded compliance
+## A. SDK lifecycle and readiness
+- [x] `LoadingAPI.ready()` вызывается ровно один раз через `sdkManager.loadingReadyOnce()` в `MenuScene`.
+- [x] Пауза/возобновление (`game_api_pause` / `game_api_resume`) подключены в `GameApp.bindPauseResume()`.
+- [x] В паузе останавливается game loop и аудио; при resume всё корректно восстанавливается.
+
+## B. Rewarded & interstitial compliance
 - [x] Rewarded точки интегрированы (raid reward x2, merge charge, hut booster).
-- [x] Награда выдается только в `onRewarded`.
-- [x] Нет выдачи награды в `onOpen/onClose/onError`.
+- [x] Награда выдаётся только в `onRewarded`.
+- [x] Interstitial показывается только по частотному гейту и remote flags.
+- [x] При `disableAds=true` interstitial отключается полностью.
 
-## B. Interstitial compliance
-- [x] Interstitial показывается только по частотному гейту.
-- [x] Частоты (`N`) берутся из remote flags.
-- [x] При `disableAds=true` interstitial полностью отключен.
-
-## C. IAP compliance
-- [x] Реализованы `getCatalog` и `purchase`.
-- [x] Для consumable: начисление -> `consumePurchase`.
-- [x] Обработаны pending purchases на старте (`getPurchases` + дозачисление + consume).
+## C. Purchases / pending / consume
+- [x] Реализованы `getCatalog`, `purchase`, `getPurchases`, `consumePurchase`.
+- [x] Для consumable поток: начисление -> `consumePurchase`.
+- [x] Pending покупки обрабатываются на старте `processPendingPurchases()`.
+- [x] После успешного начисления pending-покупка consume-ится (без повторной выдачи).
 
 ## D. Remote config & fail-safe
 - [x] Flags загружаются один раз на старте.
 - [x] Есть safe defaults на случай недоступности remote config.
-- [x] Локальный mock SDK поддерживает ads/purchases/flags flow.
+- [x] Локальный mock SDK покрывает ads / purchases / flags / pause-resume flow.
 
 ## E. QA protocol
 - [x] Unit: Ads policy gating.
 - [x] Unit: pending purchase flow.
 - [x] Lint / Typecheck / Test / Build выполнены.
+- [x] Smoke: merge 5 мин, 3 рейда, rewarded, iap (mock), pause/resume.

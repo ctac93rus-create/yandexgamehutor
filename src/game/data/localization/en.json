@@ -1,0 +1,64 @@
+{
+  "common": {
+    "backToMenu": "Menu",
+    "toMerge": "To merge",
+    "toHut": "To hut",
+    "toRaid": "To raid",
+    "language": "Language",
+    "on": "On",
+    "off": "Off"
+  },
+  "menu": {
+    "title": "Yandex Game Hutor",
+    "playMerge": "Play (Merge)",
+    "hut": "Hut",
+    "raid": "Raid",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "languageLabel": "Interface language",
+    "tutorialReset": "Reset tutorial",
+    "tutorialResetDone": "Tutorial will be shown again",
+    "sfxLabel": "SFX"
+  },
+  "merge": {
+    "title": "Merge",
+    "gold": "Gold: {{value}}",
+    "dust": "Dust: {{value}}",
+    "rewardedCharge": "Generator charge (rewarded)",
+    "raidReward": "Raid: +{{gold}} gold, +{{dust}} dust",
+    "overflow": "No space: +{{dust}} dust",
+    "generatorCooldown": "Generator is recharging...",
+    "rewardedCharges": "Rewarded: +{{value}} charges",
+    "generatorsFull": "Generators are already full",
+    "tutorial": {
+      "step1": "This is the merge board. Drag items between cells.",
+      "step2": "Merge identical items to get a higher-tier one.",
+      "step3": "Tap generators to spawn new resources.",
+      "step4": "Use rewarded button to recharge generators for free.",
+      "step5": "Claim raid rewards and upgrade your hut. Good luck!",
+      "next": "Next",
+      "done": "Done"
+    }
+  },
+  "hut": {
+    "title": "Hut / Meta",
+    "storyClaimed": "Story reward claimed",
+    "dailyClaimed": "Daily reward claimed",
+    "booster": "Booster (rewarded)",
+    "buyGold": "Buy gold (IAP)",
+    "purchaseUnavailable": "Purchase unavailable",
+    "purchaseApplied": "Purchase applied",
+    "alreadyBought": "Already purchased",
+    "notEnough": "Not enough resources",
+    "upgradeBought": "Upgrade purchased: {{title}}"
+  },
+  "raid": {
+    "title": "Raid",
+    "time": "Time: {{value}}s",
+    "baseHp": "Base HP: {{value}}",
+    "cooldown": "CD: {{value}}s",
+    "freeze": "Freeze"
+  }
+}

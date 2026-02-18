@@ -7,6 +7,7 @@ import enemiesJson from '../data/enemies.json';
 import wavesJson from '../data/waves.json';
 import { adsManager } from '../managers/AdsManager';
 import { saveManager } from '../managers/SaveManager';
+import { localizationManager } from '../managers/LocalizationManager';
 import { economySchema } from '../systems/merge/schema';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import { Defender } from '../systems/raid/Defender';
@@ -41,6 +42,8 @@ export class RaidScene extends Phaser.Scene {
   private spawnCursor = 0;
   private kills = 0;
   private baseHp = 1;
+  private spellFx?: Phaser.GameObjects.Arc;
+  private lastSpellFxAt = -1000;
 
   public constructor() {
     super('RaidScene');
@@ -66,13 +69,15 @@ export class RaidScene extends Phaser.Scene {
       this.defenders.push(new Defender(this, LANES[i], 18, 360));
     }
 
+    this.spellFx = this.add.circle(550, 360, 220, 0x93c5fd, 0.18).setDepth(2).setVisible(false);
+
     this.hud = new RaidHUD(this, () => {
       const casted = this.spell.tryCast(550, 360, this.enemies);
       if (casted) {
-        this.add.circle(550, 360, 220, 0x93c5fd, 0.22).setDepth(2);
+        this.playSpellFx();
       }
     });
-    this.hud.render({ timeLeftSec: this.waves.durationSec, baseHp: this.baseHp, spellCooldown: 0 });
+    this.hud.render(this.waves.durationSec, this.baseHp, 0);
   }
 
   public update(_time: number, deltaMs: number): void {
@@ -107,11 +112,7 @@ export class RaidScene extends Phaser.Scene {
     }
     this.enemies.length = write;
 
-    this.hud.render({
-      timeLeftSec: Math.max(0, this.waves.durationSec - this.elapsedSec),
-      baseHp: this.baseHp,
-      spellCooldown: this.spell.cooldownLeftSec,
-    });
+    this.hud.render(Math.max(0, this.waves.durationSec - this.elapsedSec), this.baseHp, this.spell.cooldownLeftSec);
 
     const state = this.controller.evaluate(this.elapsedSec, this.waves.durationSec, this.baseHp, this.enemies.length);
     if (state !== 'running') {
@@ -172,8 +173,27 @@ export class RaidScene extends Phaser.Scene {
     });
   }
 
+
+  private playSpellFx(): void {
+    const now = this.time.now;
+    if (!this.spellFx || now - this.lastSpellFxAt < 120) {
+      return;
+    }
+    this.lastSpellFxAt = now;
+    this.spellFx.setScale(0.65).setAlpha(0.3).setVisible(true);
+    this.tweens.add({
+      targets: this.spellFx,
+      scale: 1,
+      alpha: 0,
+      duration: 240,
+      onComplete: () => {
+        this.spellFx?.setVisible(false);
+      },
+    });
+  }
   private drawLanes(): void {
-    this.add.text(40, 24, 'Raid MVP', { color: '#f8fafc', fontSize: '34px' });
+    this.add.rectangle(this.scale.width * 0.5, 54, this.scale.width - 60, 82, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
+    this.add.text(40, 28, localizationManager.t('raid.title'), { color: '#f8fafc', fontSize: '36px' });
     for (let i = 0; i < LANES.length; i += 1) {
       const lane = LANES[i];
       this.add.rectangle(640, lane.y, 1220, 90, 0x1e293b, 0.75).setDepth(1);
