@@ -45,9 +45,22 @@ Safe defaults:
 - `allowRewardedWhenAdsDisabled=true`
 - `interstitialRaidEvery=2`
 - `interstitialScreenEvery=3`
+- `adsInterstitialMinIntervalSec=45`
+- `rewardedCooldownSec=30`
 - `rewardedMergeGeneratorCharges=1`
 - `rewardedHutBoosterGold=30`
 - `rewardedHutBoosterDust=10`
+- `raidRewardMultiplier=1`
+- `raidScoreMultiplier=1`
+- `mergeDustMultiplier=1`
+- `generatorRechargeMultiplier=1`
+- `hutUpgradeCostMultiplier=1`
+- `raidSoftCapDailyFullRewards=8`
+- `raidSoftCapDecay=0.35`
+- `raidSoftCapMinMultiplier=0.2`
+- `showTuningDebugPanel=false`
+
+Экономические ключи применяются через `EconomyTuning` слой с валидацией и clamp: некорректные/выходящие за диапазон значения автоматически нормализуются до безопасных.
 
 ## Local mock SDK
 Локально используется fallback mock (`SDKManager.createMockSdk`), поэтому:

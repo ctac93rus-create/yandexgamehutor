@@ -82,6 +82,10 @@ export interface MetaProgressState {
   stats: MetaStats;
   quests: QuestProgressState;
   achievementsUnlocked?: string[];
+  liveops?: {
+    raidRewardDayKey?: string;
+    raidRewardsClaimedToday?: number;
+  };
 }
 
 export interface QuestSnapshot {

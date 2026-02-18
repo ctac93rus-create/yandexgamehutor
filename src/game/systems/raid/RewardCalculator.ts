@@ -10,14 +10,19 @@ export interface RaidReward {
 export class RewardCalculator {
   public constructor(private readonly economy: RaidEconomyConfig) {}
 
-  public calculate(result: RaidResult, doubled: boolean): RaidReward {
+  public calculate(
+    result: RaidResult,
+    doubled: boolean,
+    rewardMultiplier = 1,
+    softCapMultiplier = 1,
+  ): RaidReward {
     const goldBase = this.economy.baseGold + result.kills * this.economy.goldPerKill;
     const dustBase = this.economy.baseDust + Math.max(0, result.baseHpLeft) * this.economy.dustPerSurvivedHp;
-    const multiplier = doubled ? 2 : 1;
+    const multiplier = (doubled ? 2 : 1) * rewardMultiplier * softCapMultiplier;
 
     return {
-      gold: goldBase * multiplier,
-      dust: dustBase * multiplier,
+      gold: Math.max(0, Math.round(goldBase * multiplier)),
+      dust: Math.max(0, Math.round(dustBase * multiplier)),
       itemIds: this.economy.rewardItems,
     };
   }

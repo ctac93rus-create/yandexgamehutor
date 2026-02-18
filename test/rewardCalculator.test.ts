@@ -31,4 +31,16 @@ describe('RewardCalculator', () => {
     expect(reward.gold).toBe(62);
     expect(reward.dust).toBe(8);
   });
+
+  it('applies liveops reward and soft-cap multipliers', () => {
+    const reward = calculator.calculate(
+      { win: true, kills: 8, baseHpLeft: 6, durationSec: 41 },
+      false,
+      1.2,
+      0.5,
+    );
+
+    expect(reward.gold).toBe(25);
+    expect(reward.dust).toBe(6);
+  });
 });

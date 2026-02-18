@@ -10,6 +10,7 @@ import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { economySchema } from '../systems/merge/schema';
 import { computeBonuses } from '../systems/meta/bonuses';
+import { applyUpgradeCost, getEconomyTuning } from '../systems/economy/EconomyTuning';
 import type { EconomyConfig, SaveState } from '../systems/merge/types';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import type {
@@ -25,6 +26,7 @@ export class HutScene extends Phaser.Scene {
   private questEngine!: QuestEngine;
   private upgrades: HutUpgradeDefinition[] = [];
   private saveEconomy!: EconomyConfig;
+  private tuning = getEconomyTuning(remoteConfigManager.getFlags());
 
   private goldText!: Phaser.GameObjects.Text;
   private dustText!: Phaser.GameObjects.Text;
@@ -58,6 +60,7 @@ export class HutScene extends Phaser.Scene {
 
   private async restoreState(): Promise<void> {
     const economy = economySchema.parse(economyJson) as EconomyConfig;
+    this.tuning = getEconomyTuning(remoteConfigManager.getFlags());
     this.saveEconomy = economy;
     this.upgrades = economy.hutUpgrades ?? [];
 
@@ -116,7 +119,12 @@ export class HutScene extends Phaser.Scene {
     });
 
     questPanel.render(this.questEngine.snapshot());
-    upgradesPanel.render(this.upgrades, this.meta.purchasedUpgradeIds);
+    const tunedUpgrades = this.upgrades.map((upgrade) => ({
+      ...upgrade,
+      costGold: applyUpgradeCost(upgrade.costGold, this.tuning),
+      costDust: applyUpgradeCost(upgrade.costDust, this.tuning),
+    }));
+    upgradesPanel.render(tunedUpgrades, this.meta.purchasedUpgradeIds);
 
     const navStyle = {
       color: '#d1fae5',
@@ -198,16 +206,15 @@ export class HutScene extends Phaser.Scene {
       this.showToast(localizationManager.t('hut.alreadyBought'));
       return;
     }
-    if (
-      this.saveState.gold < upgrade.costGold ||
-      this.saveState.dust < upgrade.costDust
-    ) {
+    const tunedCostGold = applyUpgradeCost(upgrade.costGold, this.tuning);
+    const tunedCostDust = applyUpgradeCost(upgrade.costDust, this.tuning);
+    if (this.saveState.gold < tunedCostGold || this.saveState.dust < tunedCostDust) {
       this.showToast(localizationManager.t('hut.notEnough'));
       return;
     }
 
-    this.saveState.gold -= upgrade.costGold;
-    this.saveState.dust -= upgrade.costDust;
+    this.saveState.gold -= tunedCostGold;
+    this.saveState.dust -= tunedCostDust;
     this.meta.purchasedUpgradeIds.push(upgrade.id);
     if (
       upgrade.unlockFlag &&
