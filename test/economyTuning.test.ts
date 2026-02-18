@@ -5,6 +5,7 @@ import {
   applyDustAmount,
   applyUpgradeCost,
   getEconomyTuning,
+  getTunedUpgradeCost,
   getRaidSoftCapMultiplier,
   normalizeEconomyTuning,
 } from '../src/game/systems/economy/EconomyTuning';
@@ -53,6 +54,20 @@ describe('EconomyTuning', () => {
 
     expect(applyDustAmount(4, tuning)).toBe(6);
     expect(applyUpgradeCost(80, tuning)).toBe(60);
+  });
+
+
+  it('uses a single rounded helper for hut UI and purchase costs', () => {
+    const tuning = normalizeEconomyTuning({
+      hutUpgradeCostMultiplier: 0.67,
+    });
+
+    const tuned = getTunedUpgradeCost(45, 31, tuning);
+
+    expect(tuned).toEqual({
+      gold: applyUpgradeCost(45, tuning),
+      dust: applyUpgradeCost(31, tuning),
+    });
   });
 
   it('calculates raid soft-cap curve after N raids', () => {
