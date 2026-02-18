@@ -92,17 +92,21 @@ export class SaveManager {
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
 
-    const player = await this.sdk.getPlayer();
-    if (!player) {
-      return;
-    }
+    try {
+      const player = await this.sdk.getPlayer();
+      if (!player) {
+        return;
+      }
 
-    const current = await player.getData();
-    const next = {
-      ...current,
-      [SAVE_KEY]: stateToSave,
-    };
-    await player.setData(next);
+      const current = await player.getData();
+      const next = {
+        ...current,
+        [SAVE_KEY]: stateToSave,
+      };
+      await player.setData(next);
+    } catch {
+      // best-effort cloud sync: local save is the source of truth on transient SDK failures
+    }
   }
 }
 

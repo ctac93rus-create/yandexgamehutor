@@ -60,6 +60,14 @@ const createManager = (cloudData: Record<string, unknown> = {}): SaveManager => 
   return new SaveManager(sdk);
 };
 
+const createManagerWithPlayer = (player: Pick<YandexPlayer, 'getData' | 'setData'>): SaveManager => {
+  const sdk = {
+    getPlayer: vi.fn().mockResolvedValue(player),
+  };
+
+  return new SaveManager(sdk);
+};
+
 describe('SaveManager cloud/local conflict resolution', () => {
   beforeEach(() => {
     Object.defineProperty(globalThis, 'localStorage', {
@@ -75,6 +83,13 @@ describe('SaveManager cloud/local conflict resolution', () => {
   it('returns cloud save when cloud exists and local is missing', async () => {
     const cloudState: SaveState = { ...baseState, updatedAt: 10 };
     const manager = createManager({ [SAVE_KEY]: cloudState });
+
+    await expect(manager.load()).resolves.toEqual(cloudState);
+  });
+
+  it('accepts cloud save stored as JSON string', async () => {
+    const cloudState: SaveState = { ...baseState, updatedAt: 15 };
+    const manager = createManager({ [SAVE_KEY]: JSON.stringify(cloudState) });
 
     await expect(manager.load()).resolves.toEqual(cloudState);
   });
@@ -116,5 +131,16 @@ describe('SaveManager cloud/local conflict resolution', () => {
     expect(saved?.updatedAt).toBe(123456);
 
     now.mockRestore();
+  });
+
+  it('does not throw when cloud sync fails during save', async () => {
+    const player: Pick<YandexPlayer, 'getData' | 'setData'> = {
+      getData: vi.fn().mockResolvedValue({}),
+      setData: vi.fn().mockRejectedValue(new Error('cloud unavailable')),
+    };
+    const manager = createManagerWithPlayer(player);
+
+    await expect(manager.save(baseState)).resolves.toBeUndefined();
+    expect(localStorage.getItem(SAVE_KEY)).not.toBeNull();
   });
 });
