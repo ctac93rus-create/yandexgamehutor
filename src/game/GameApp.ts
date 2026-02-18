@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from './managers/AudioManager';
+import { purchasesManager } from './managers/PurchasesManager';
+import { remoteConfigManager } from './managers/RemoteConfigManager';
+import { saveManager } from './managers/SaveManager';
 import { sdkManager } from './managers/SDKManager';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
@@ -15,6 +18,23 @@ export class GameApp {
 
   public async start(): Promise<void> {
     await sdkManager.init();
+    await remoteConfigManager.init();
+
+    purchasesManager.registerConsumable('pack_gold_small', async () => {
+      const save = await saveManager.load();
+      if (!save) {
+        return;
+      }
+      await saveManager.save({ ...save, gold: save.gold + 250 });
+    });
+    purchasesManager.registerConsumable('pack_dust_small', async () => {
+      const save = await saveManager.load();
+      if (!save) {
+        return;
+      }
+      await saveManager.save({ ...save, dust: save.dust + 125 });
+    });
+    await purchasesManager.processPendingPurchases();
 
     this.game = new Phaser.Game({
       type: Phaser.AUTO,

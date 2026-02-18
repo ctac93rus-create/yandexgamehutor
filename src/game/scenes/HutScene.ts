@@ -3,6 +3,9 @@ import Phaser from 'phaser';
 import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
 import economyJson from '../data/economy.json';
+import { adsManager } from '../managers/AdsManager';
+import { purchasesManager } from '../managers/PurchasesManager';
+import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { economySchema } from '../systems/merge/schema';
 import type { EconomyConfig, SaveState } from '../systems/merge/types';
@@ -31,6 +34,7 @@ export class HutScene extends Phaser.Scene {
 
     await this.restoreState();
     this.renderScene();
+    await adsManager.onScreenShown();
   }
 
   private async restoreState(): Promise<void> {
@@ -102,7 +106,43 @@ export class HutScene extends Phaser.Scene {
       .text(300, 678, 'В меню', navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => this.scene.start('MenuScene'));
+    this.add
+      .text(430, 678, 'Бустер (rewarded)', { ...navStyle, backgroundColor: '#4c1d95', color: '#e9d5ff' })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => {
+        void adsManager.showRewarded('hut_booster', () => {
+          void this.claimRewardedBooster();
+        });
+      });
+    this.add
+      .text(650, 678, 'Купить золото (IAP)', { ...navStyle, backgroundColor: '#7c2d12', color: '#ffedd5' })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => {
+        void this.buyGoldPack();
+      });
 
+    this.refreshHud();
+  }
+
+
+  private async claimRewardedBooster(): Promise<void> {
+    const flags = remoteConfigManager.getFlags();
+    this.saveState.gold += flags.rewardedHutBoosterGold;
+    this.saveState.dust += flags.rewardedHutBoosterDust;
+    await this.persist(`Rewarded: +${flags.rewardedHutBoosterGold} золота, +${flags.rewardedHutBoosterDust} пыли`);
+  }
+
+  private async buyGoldPack(): Promise<void> {
+    const success = await purchasesManager.purchase('pack_gold_small');
+    if (!success) {
+      this.showToast('Покупка недоступна');
+      return;
+    }
+    const latest = await saveManager.load();
+    if (latest) {
+      this.saveState = latest;
+    }
+    this.showToast('Покупка применена');
     this.refreshHud();
   }
 

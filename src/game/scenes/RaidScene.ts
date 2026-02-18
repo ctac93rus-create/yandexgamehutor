@@ -5,8 +5,8 @@ import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
 import enemiesJson from '../data/enemies.json';
 import wavesJson from '../data/waves.json';
+import { adsManager } from '../managers/AdsManager';
 import { saveManager } from '../managers/SaveManager';
-import { sdkManager } from '../managers/SDKManager';
 import { economySchema } from '../systems/merge/schema';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import { Defender } from '../systems/raid/Defender';
@@ -47,6 +47,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   public create(): void {
+    void adsManager.onScreenShown();
     this.cameras.main.setBackgroundColor('#0f172a');
     this.drawLanes();
 
@@ -143,13 +144,13 @@ export class RaidScene extends Phaser.Scene {
         void this.claimReward(doubled, result);
       },
       () => {
-        void sdkManager.showRewardedVideo({
-          onRewarded: () => {
-            void this.claimReward(true, result);
-          },
+        void adsManager.showRewarded('raid_double_reward', () => {
+          void this.claimReward(true, result);
         });
       },
     );
+
+    void adsManager.onRaidFinished();
   }
 
   private async claimReward(doubled: boolean, result: RaidResult): Promise<void> {

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { adsManager } from '../managers/AdsManager';
 import { sdkManager } from '../managers/SDKManager';
 
 const MENU_ITEMS = [
@@ -15,6 +16,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   public create(): void {
+    void adsManager.onScreenShown();
     this.cameras.main.setBackgroundColor('#020617');
 
     this.add
