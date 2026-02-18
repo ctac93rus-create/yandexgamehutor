@@ -28,7 +28,6 @@
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^6.2.0",
-    "vitest": "^3.0.8",
-    "eslint-import-resolver-typescript": "^3.6.3"
+    "vitest": "^3.0.8"
   }
 }

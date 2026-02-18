@@ -242,7 +242,7 @@ export class MergeScene extends Phaser.Scene {
   }
 
   private bindDragAndDrop(): void {
-    this.input.on('dragstart', (_pointer, target: Phaser.GameObjects.GameObject) => {
+    this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
       const entity = this.findEntityBySprite(target);
       if (!entity) {
         return;
@@ -250,7 +250,7 @@ export class MergeScene extends Phaser.Scene {
       entity.setDepth(40);
     });
 
-    this.input.on('drag', (_pointer, target, dragX: number, dragY: number) => {
+    this.input.on('drag', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject, dragX: number, dragY: number) => {
       const entity = this.findEntityBySprite(target);
       if (!entity) {
         return;
@@ -258,7 +258,7 @@ export class MergeScene extends Phaser.Scene {
       entity.setWorldPosition(dragX, dragY);
     });
 
-    this.input.on('dragend', (_pointer, target) => {
+    this.input.on('dragend', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
       const entity = this.findEntityBySprite(target);
       if (!entity) {
         return;
@@ -322,7 +322,7 @@ export class MergeScene extends Phaser.Scene {
   }
 
   private bindGeneratorTap(): void {
-    this.input.on('gameobjectup', (_pointer, target: Phaser.GameObjects.GameObject) => {
+    this.input.on('gameobjectup', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
       const entity = this.findEntityBySprite(target);
       if (!entity?.item.generator) {
         return;
@@ -516,6 +516,7 @@ export class MergeScene extends Phaser.Scene {
   }
 
   private async persistState(_reason: string): Promise<void> {
+    void _reason;
     await saveManager.save(this.buildSaveState());
   }
 }

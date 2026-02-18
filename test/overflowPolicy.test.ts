@@ -8,6 +8,13 @@ describe('OverflowPolicy', () => {
       overflowDustPerItem: 3,
       startGold: 0,
       startDust: 0,
+      raid: {
+        baseGold: 0,
+        goldPerKill: 0,
+        baseDust: 0,
+        dustPerSurvivedHp: 0,
+        rewardItems: [],
+      },
     });
 
     expect(policy.resolveNoSpace(2)).toEqual({

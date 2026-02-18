@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 export class WipScene extends Phaser.Scene {
-  public constructor(private readonly sceneKey: string, private readonly label: string) {
+  public constructor(sceneKey: string, private readonly label: string) {
     super(sceneKey);
   }
 
