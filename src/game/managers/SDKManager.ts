@@ -18,7 +18,11 @@ export class SDKManager {
     }
 
     const yaGames = (globalThis as unknown as { YaGames?: Window['YaGames'] }).YaGames;
-    this.ysdk = yaGames ? await yaGames.init() : await this.createMockSdk();
+    try {
+      this.ysdk = yaGames ? await yaGames.init() : await this.createMockSdk();
+    } catch {
+      this.ysdk = await this.createMockSdk();
+    }
     this.initialized = true;
   }
 
