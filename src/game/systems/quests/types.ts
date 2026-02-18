@@ -73,6 +73,7 @@ export interface MetaStats {
   raidsCompleted: number;
   raidWins: number;
   hutUpgrades: number;
+  bestRaidKills: number;
 }
 
 export interface MetaProgressState {
@@ -80,6 +81,7 @@ export interface MetaProgressState {
   purchasedUpgradeIds: string[];
   stats: MetaStats;
   quests: QuestProgressState;
+  achievementsUnlocked?: string[];
 }
 
 export interface QuestSnapshot {

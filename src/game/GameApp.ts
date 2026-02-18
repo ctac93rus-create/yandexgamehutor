@@ -13,6 +13,7 @@ import { MergeScene } from './scenes/MergeScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { RaidScene } from './scenes/RaidScene';
 import { SettingsScene } from './scenes/SettingsScene';
+import { SocialScene } from './scenes/SocialScene';
 
 export class GameApp {
   private game: Phaser.Game | null = null;
@@ -59,6 +60,7 @@ export class GameApp {
         HutScene,
         RaidScene,
         SettingsScene,
+        SocialScene,
       ],
     });
 

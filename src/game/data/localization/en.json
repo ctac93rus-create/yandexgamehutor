@@ -13,7 +13,9 @@
     "playMerge": "Play (Merge)",
     "hut": "Hut",
     "raid": "Raid",
-    "settings": "Settings"
+    "settings": "Settings",
+    "leaderboard": "Leaderboard",
+    "achievements": "Achievements"
   },
   "settings": {
     "title": "Settings",
@@ -66,5 +68,48 @@
   "hut.effectGeneratorCharges": "+{value} max generator charges",
   "hut.effectDefenderDps": "+{value}% defender DPS",
   "hut.effectBaseHp": "+{value} base HP",
-  "hut.effectSpellCooldown": "-{value}% spell cooldown"
+  "hut.effectSpellCooldown": "-{value}% spell cooldown",
+  "social": {
+    "title": "Social",
+    "leaderboardTab": "Leaderboard",
+    "achievementsTab": "Achievements",
+    "leaderboardUnavailable": "Leaderboard is available in Yandex Games",
+    "bestScore": "Best score: {{value}}",
+    "playerRank": "You: rank {{rank}}, score {{score}}",
+    "playerRankMissing": "Your rank is not available yet",
+    "top10": "Top 10",
+    "anonymous": "Player",
+    "refresh": "Refresh",
+    "locked": "Locked",
+    "unlocked": "Unlocked"
+  },
+  "achievements": {
+    "unlockedToast": "Achievement unlocked: {{title}}",
+    "list": {
+      "first_raid": {
+        "title": "First Raid",
+        "description": "Complete 1 raid"
+      },
+      "merges_100": {
+        "title": "Merge Master",
+        "description": "Perform 100 merges"
+      },
+      "chapter_1": {
+        "title": "Chapter I",
+        "description": "Unlock chapter 1"
+      },
+      "raid_winner_1": {
+        "title": "Raid Winner",
+        "description": "Win a raid"
+      },
+      "generator_50": {
+        "title": "Engineer",
+        "description": "Spawn 50 items from generators"
+      },
+      "upgrader_3": {
+        "title": "Builder",
+        "description": "Buy 3 hut upgrades"
+      }
+    }
+  }
 }

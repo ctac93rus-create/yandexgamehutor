@@ -15,6 +15,28 @@ export interface YandexPayments {
   consumePurchase(token: string): Promise<void>;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  score: number;
+  player?: {
+    publicName?: string;
+    uniqueID?: string;
+  };
+}
+
+export interface LeaderboardEntriesResponse {
+  entries: LeaderboardEntry[];
+}
+
+export interface Leaderboards {
+  setLeaderboardScore(leaderboardName: string, score: number): Promise<void>;
+  getLeaderboardPlayerEntry(leaderboardName: string): Promise<LeaderboardEntry | null>;
+  getLeaderboardEntries(
+    leaderboardName: string,
+    options?: { quantityTop?: number; includeUser?: boolean; quantityAround?: number },
+  ): Promise<LeaderboardEntriesResponse>;
+}
+
 export interface AdvCallbacks {
   onOpen?(): void;
   onClose?(wasShown?: boolean): void;
@@ -35,6 +57,7 @@ export interface YandexSDK {
   getFlags(input: { defaultFlags: Record<string, unknown> }): Promise<Record<string, unknown>>;
   getPlayer(): Promise<YandexPlayer>;
   getPayments(): Promise<YandexPayments>;
+  getLeaderboards(): Promise<Leaderboards>;
   on(event: YandexEvent, callback: () => void): void;
   off(event: YandexEvent, callback: () => void): void;
 }
