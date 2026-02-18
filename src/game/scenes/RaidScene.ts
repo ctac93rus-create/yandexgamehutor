@@ -7,6 +7,8 @@ import enemiesJson from '../data/enemies.json';
 import wavesJson from '../data/waves.json';
 import { adsManager } from '../managers/AdsManager';
 import { saveManager } from '../managers/SaveManager';
+import { achievementsManager } from '../managers/AchievementsManager';
+import { leaderboardsManager } from '../managers/LeaderboardsManager';
 import { localizationManager } from '../managers/LocalizationManager';
 import { economySchema } from '../systems/merge/schema';
 import { QuestEngine } from '../systems/quests/QuestEngine';
@@ -208,14 +210,32 @@ export class RaidScene extends Phaser.Scene {
   ): Promise<void> {
     const reward = this.rewardCalculator.calculate(result, doubled);
     const save = await saveManager.load();
+    const meta = save?.meta ?? QuestEngine.defaultState();
+    const questEngine = new QuestEngine(meta, storyJson, dailyJson);
+    questEngine.onEvent('raid_complete', 1);
+    if (result.win) {
+      questEngine.onEvent('raid_win', 1);
+    }
+    const nextMeta = questEngine.getState();
+    const previousBest = nextMeta.stats.bestRaidKills ?? 0;
+    const updatedBest = Math.max(previousBest, result.kills);
+    nextMeta.stats.bestRaidKills = updatedBest;
+    await achievementsManager.process(nextMeta);
+
     if (save) {
-      const meta = save.meta ?? QuestEngine.defaultState();
-      const questEngine = new QuestEngine(meta, storyJson, dailyJson);
-      questEngine.onEvent('raid_complete', 1);
-      if (result.win) {
-        questEngine.onEvent('raid_win', 1);
-      }
-      await saveManager.save({ ...save, meta: questEngine.getState() });
+      await saveManager.save({ ...save, meta: nextMeta });
+    } else {
+      await saveManager.save({
+        gold: 0,
+        dust: 0,
+        occupiedCells: [],
+        generators: {},
+        meta: nextMeta,
+      });
+    }
+
+    if (updatedBest > previousBest) {
+      void leaderboardsManager.submitBestRaidKills(updatedBest);
     }
 
     this.scene.start('MergeScene', {

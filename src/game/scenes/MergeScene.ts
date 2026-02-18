@@ -7,6 +7,7 @@ import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
 import { adsManager } from '../managers/AdsManager';
 import { localizationManager } from '../managers/LocalizationManager';
+import { achievementsManager } from '../managers/AchievementsManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
 import { saveManager } from '../managers/SaveManager';
 import { settingsManager } from '../managers/SettingsManager';
@@ -682,6 +683,11 @@ export class MergeScene extends Phaser.Scene {
 
   private async persistState(_reason: string): Promise<void> {
     void _reason;
+    const newlyUnlocked = await achievementsManager.process(this.questEngine.getState());
+    if (newlyUnlocked.length > 0) {
+      const title = localizationManager.t(`achievements.list.${newlyUnlocked[0]}.title`);
+      this.showToast(localizationManager.t('achievements.unlockedToast', { title }));
+    }
     await saveManager.save(this.buildSaveState());
   }
 }

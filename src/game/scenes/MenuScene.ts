@@ -8,12 +8,15 @@ import type { Locale } from '../managers/SettingsManager';
 interface MenuItem {
   titleKey: string;
   target: string;
+  data?: Record<string, unknown>;
 }
 
 const MENU_ITEMS: MenuItem[] = [
   { titleKey: 'menu.playMerge', target: 'MergeScene' },
   { titleKey: 'menu.hut', target: 'HutScene' },
   { titleKey: 'menu.raid', target: 'RaidScene' },
+  { titleKey: 'menu.leaderboard', target: 'SocialScene', data: { tab: 'leaderboard' } },
+  { titleKey: 'menu.achievements', target: 'SocialScene', data: { tab: 'achievements' } },
   { titleKey: 'menu.settings', target: 'SettingsScene' },
 ];
 
@@ -41,7 +44,7 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     MENU_ITEMS.forEach((item, index) => {
-      const y = 230 + index * 108;
+      const y = 190 + index * 84;
       const button = this.add
         .rectangle(this.scale.width * 0.5, y, 460, 80, 0x14532d, 0.98)
         .setStrokeStyle(2, 0x86efac)
@@ -56,7 +59,7 @@ export class MenuScene extends Phaser.Scene {
         .setOrigin(0.5);
 
       button.on('pointerup', () => {
-        this.scene.start(item.target);
+        this.scene.start(item.target, item.data);
       });
     });
 

@@ -38,6 +38,11 @@ describe('SDKManager', () => {
           getPurchases: async () => [],
           consumePurchase: async () => undefined,
         }),
+        getLeaderboards: async () => ({
+          setLeaderboardScore: async () => undefined,
+          getLeaderboardPlayerEntry: async () => null,
+          getLeaderboardEntries: async () => ({ entries: [] }),
+        }),
         on: () => undefined,
         off: () => undefined,
       }),

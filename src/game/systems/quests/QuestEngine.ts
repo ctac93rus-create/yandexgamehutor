@@ -21,6 +21,8 @@ export class QuestEngine {
   ) {
     this.stories = new StoryChapters(storyQuests);
     this.dailies = new DailyQuests(dailyQuests);
+    this.state.stats.bestRaidKills = this.state.stats.bestRaidKills ?? 0;
+    this.state.achievementsUnlocked = this.state.achievementsUnlocked ?? [];
     this.refreshDailyIfNeeded();
     this.ensureStoryActivation();
   }
@@ -35,6 +37,7 @@ export class QuestEngine {
         raidsCompleted: 0,
         raidWins: 0,
         hutUpgrades: 0,
+        bestRaidKills: 0,
       },
       quests: {
         activeStoryQuestIds: [],

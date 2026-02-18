@@ -13,7 +13,9 @@
     "playMerge": "Играть (Merge)",
     "hut": "Хутор",
     "raid": "Рейд",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "leaderboard": "Лидерборд",
+    "achievements": "Достижения"
   },
   "settings": {
     "title": "Настройки",
@@ -66,5 +68,48 @@
   "hut.effectGeneratorCharges": "+{value} макс. зарядов генератора",
   "hut.effectDefenderDps": "+{value}% DPS защитников",
   "hut.effectBaseHp": "+{value} HP базы",
-  "hut.effectSpellCooldown": "-{value}% кулдауна заклинания"
+  "hut.effectSpellCooldown": "-{value}% кулдауна заклинания",
+  "social": {
+    "title": "Соц. центр",
+    "leaderboardTab": "Лидерборд",
+    "achievementsTab": "Достижения",
+    "leaderboardUnavailable": "Лидерборд доступен на Яндекс.Играх",
+    "bestScore": "Лучший счёт: {{value}}",
+    "playerRank": "Вы: место {{rank}}, счёт {{score}}",
+    "playerRankMissing": "Ваше место пока недоступно",
+    "top10": "Топ-10",
+    "anonymous": "Игрок",
+    "refresh": "Обновить",
+    "locked": "Закрыто",
+    "unlocked": "Открыто"
+  },
+  "achievements": {
+    "unlockedToast": "Достижение: {{title}}",
+    "list": {
+      "first_raid": {
+        "title": "Первый рейд",
+        "description": "Завершите 1 рейд"
+      },
+      "merges_100": {
+        "title": "Сотня merge",
+        "description": "Сделайте 100 merge"
+      },
+      "chapter_1": {
+        "title": "Глава I",
+        "description": "Откройте главу 1"
+      },
+      "raid_winner_1": {
+        "title": "Победа в рейде",
+        "description": "Выиграйте рейд"
+      },
+      "generator_50": {
+        "title": "Инженер",
+        "description": "Сгенерируйте 50 предметов"
+      },
+      "upgrader_3": {
+        "title": "Строитель",
+        "description": "Купите 3 апгрейда хутора"
+      }
+    }
+  }
 }

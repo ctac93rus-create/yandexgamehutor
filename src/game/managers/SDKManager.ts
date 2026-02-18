@@ -1,6 +1,7 @@
 import type {
   AdvCallbacks,
   YandexEvent,
+  Leaderboards,
   YandexPayments,
   YandexPlayer,
   YandexSDK,
@@ -29,6 +30,14 @@ export class SDKManager {
     return this.ysdk.getPlayer();
   }
 
+
+  public async getLeaderboards(): Promise<Leaderboards | null> {
+    if (!this.ysdk) {
+      return null;
+    }
+
+    return this.ysdk.getLeaderboards();
+  }
   public async getPayments(): Promise<YandexPayments | null> {
     if (!this.ysdk) {
       return null;
@@ -132,6 +141,11 @@ export class SDKManager {
         purchase: async ({ id }) => ({ id, purchaseToken: Date.now().toString() }),
         getPurchases: async () => [],
         consumePurchase: async () => undefined,
+      }),
+      getLeaderboards: async () => ({
+        setLeaderboardScore: async () => undefined,
+        getLeaderboardPlayerEntry: async () => null,
+        getLeaderboardEntries: async () => ({ entries: [] }),
       }),
       on: (event, callback) => {
         if (!listeners.has(event)) {
