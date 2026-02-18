@@ -16,11 +16,23 @@ import { Inventory } from '../systems/merge/Inventory';
 import { MergeGrid } from '../systems/merge/MergeGrid';
 import { MergeResolver } from '../systems/merge/MergeResolver';
 import { OverflowPolicy } from '../systems/merge/OverflowPolicy';
-import { economySchema, itemsSchema, mergeChainsSchema } from '../systems/merge/schema';
-import type { EconomyConfig, GridPosition, ItemDefinition, SaveState } from '../systems/merge/types';
+import {
+  economySchema,
+  itemsSchema,
+  mergeChainsSchema,
+} from '../systems/merge/schema';
+import { computeBonuses, getDefaultBonuses } from '../systems/meta/bonuses';
+import type {
+  EconomyConfig,
+  GeneratorConfig,
+  GridPosition,
+  ItemDefinition,
+  SaveState,
+} from '../systems/merge/types';
 import { QuestEngine } from '../systems/quests/QuestEngine';
 import type { MetaProgressState } from '../systems/quests/types';
 import type { RaidReward } from '../systems/raid/RewardCalculator';
+import type { MetaBonuses } from '../systems/meta/bonuses';
 
 const GRID_ROWS = 6;
 const GRID_COLS = 7;
@@ -42,12 +54,17 @@ export class MergeScene extends Phaser.Scene {
   private readonly grid = new MergeGrid(GRID_ROWS, GRID_COLS);
   private readonly generators = new Generators();
   private readonly runtimeItems = new Map<string, ItemEntity>();
-  private readonly entityBySprite = new Map<Phaser.GameObjects.GameObject, ItemEntity>();
+  private readonly entityBySprite = new Map<
+    Phaser.GameObjects.GameObject,
+    ItemEntity
+  >();
 
   private itemsById = new Map<string, ItemDefinition>();
   private mergeResolver!: MergeResolver;
   private inventory = new Inventory(this.grid);
   private overflowPolicy!: OverflowPolicy;
+  private economy!: EconomyConfig;
+  private bonuses: MetaBonuses = getDefaultBonuses();
 
   private gold = 0;
   private dust = 0;
@@ -94,9 +111,18 @@ export class MergeScene extends Phaser.Scene {
           if (!entity.item.generator) {
             return;
           }
-          const before = this.generators.getState(entity.runtimeId, entity.item.generator).charges;
-          this.generators.refill(entity.runtimeId, entity.item.generator);
-          const after = this.generators.getState(entity.runtimeId, entity.item.generator).charges;
+          const boostedGenerator = this.getBoostedGenerator(
+            entity.item.generator,
+          );
+          const before = this.generators.getState(
+            entity.runtimeId,
+            boostedGenerator,
+          ).charges;
+          this.generators.refill(entity.runtimeId, boostedGenerator);
+          const after = this.generators.getState(
+            entity.runtimeId,
+            boostedGenerator,
+          ).charges;
           if (after !== before) {
             changed = true;
           }
@@ -118,6 +144,7 @@ export class MergeScene extends Phaser.Scene {
 
     this.itemsById = new Map(parsedItems.map((item) => [item.id, item]));
     this.mergeResolver = new MergeResolver(parsedChains);
+    this.economy = parsedEconomy;
     this.overflowPolicy = new OverflowPolicy(parsedEconomy);
     this.gold = parsedEconomy.startGold;
     this.dust = parsedEconomy.startDust;
@@ -125,10 +152,28 @@ export class MergeScene extends Phaser.Scene {
 
   private drawLayout(): void {
     this.cameras.main.setBackgroundColor('#111827');
-    this.add.rectangle(this.scale.width * 0.5, 48, this.scale.width - 40, 72, 0x1e293b, 0.95).setStrokeStyle(2, 0x334155);
-    this.add.text(32, 28, localizationManager.t('merge.title'), { color: '#f8fafc', fontSize: '30px' });
-    this.goldText = this.add.text(260, 28, '', { color: '#fbbf24', fontSize: '24px' });
-    this.dustText = this.add.text(460, 28, '', { color: '#a78bfa', fontSize: '24px' });
+    this.add
+      .rectangle(
+        this.scale.width * 0.5,
+        48,
+        this.scale.width - 40,
+        72,
+        0x1e293b,
+        0.95,
+      )
+      .setStrokeStyle(2, 0x334155);
+    this.add.text(32, 28, localizationManager.t('merge.title'), {
+      color: '#f8fafc',
+      fontSize: '30px',
+    });
+    this.goldText = this.add.text(260, 28, '', {
+      color: '#fbbf24',
+      fontSize: '24px',
+    });
+    this.dustText = this.add.text(460, 28, '', {
+      color: '#a78bfa',
+      fontSize: '24px',
+    });
     this.toastText = this.add
       .text(this.scale.width / 2, 84, '', {
         color: '#e2e8f0',
@@ -155,14 +200,28 @@ export class MergeScene extends Phaser.Scene {
     }
 
     const navY = 705;
-    this.makeButton(100, navY, localizationManager.t('common.backToMenu'), () => this.scene.start('MenuScene'));
-    this.makeButton(255, navY, localizationManager.t('common.toHut'), () => this.scene.start('HutScene'));
-    this.makeButton(410, navY, localizationManager.t('common.toRaid'), () => this.scene.start('RaidScene'));
-    this.makeButton(735, navY, localizationManager.t('merge.rewardedCharge'), () => {
-      void adsManager.showRewarded('merge_generator_charge', () => {
-        this.grantRewardedGeneratorCharge();
-      });
-    }, 440, 0x4c1d95, 0xe9d5ff);
+    this.makeButton(100, navY, localizationManager.t('common.backToMenu'), () =>
+      this.scene.start('MenuScene'),
+    );
+    this.makeButton(255, navY, localizationManager.t('common.toHut'), () =>
+      this.scene.start('HutScene'),
+    );
+    this.makeButton(410, navY, localizationManager.t('common.toRaid'), () =>
+      this.scene.start('RaidScene', { bonuses: this.bonuses }),
+    );
+    this.makeButton(
+      735,
+      navY,
+      localizationManager.t('merge.rewardedCharge'),
+      () => {
+        void adsManager.showRewarded('merge_generator_charge', () => {
+          this.grantRewardedGeneratorCharge();
+        });
+      },
+      440,
+      0x4c1d95,
+      0xe9d5ff,
+    );
 
     this.refreshHud();
   }
@@ -180,7 +239,12 @@ export class MergeScene extends Phaser.Scene {
       .rectangle(x, y, width, 54, bgColor, 0.98)
       .setStrokeStyle(2, 0x86efac)
       .setInteractive({ useHandCursor: true });
-    this.add.text(x, y, label, { color: Phaser.Display.Color.IntegerToColor(textColor).rgba, fontSize: '20px' }).setOrigin(0.5);
+    this.add
+      .text(x, y, label, {
+        color: Phaser.Display.Color.IntegerToColor(textColor).rgba,
+        fontSize: '20px',
+      })
+      .setOrigin(0.5);
     button.on('pointerup', onClick);
   }
 
@@ -191,6 +255,7 @@ export class MergeScene extends Phaser.Scene {
       this.dust = save.dust;
       this.meta = save.meta ?? QuestEngine.defaultState();
       this.questEngine = new QuestEngine(this.meta, storyJson, dailyJson);
+      this.bonuses = computeBonuses(this.meta, this.economy);
       this.generators.importState(save.generators);
       save.occupiedCells.forEach((cell) => {
         const item = this.itemsById.get(cell.itemId);
@@ -207,6 +272,7 @@ export class MergeScene extends Phaser.Scene {
 
     this.meta = QuestEngine.defaultState();
     this.questEngine = new QuestEngine(this.meta, storyJson, dailyJson);
+    this.bonuses = computeBonuses(this.meta, this.economy);
     this.spawnItemById('campfire');
     this.spawnItemById('twig');
     this.spawnItemById('twig');
@@ -235,133 +301,182 @@ export class MergeScene extends Phaser.Scene {
       }
     }
 
-    this.showToast(localizationManager.t('merge.raidReward', { gold: this.pendingRaidReward.gold, dust: this.pendingRaidReward.dust }));
+    this.showToast(
+      localizationManager.t('merge.raidReward', {
+        gold: this.pendingRaidReward.gold,
+        dust: this.pendingRaidReward.dust,
+      }),
+    );
     this.pendingRaidReward = null;
     this.refreshHud();
     await this.persistState('raid_reward_claim');
   }
 
   private bindDragAndDrop(): void {
-    this.input.on('dragstart', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
-      const entity = this.findEntityBySprite(target);
-      if (!entity) {
-        return;
-      }
-      entity.setDepth(40);
-    });
+    this.input.on(
+      'dragstart',
+      (
+        _pointer: Phaser.Input.Pointer,
+        target: Phaser.GameObjects.GameObject,
+      ) => {
+        const entity = this.findEntityBySprite(target);
+        if (!entity) {
+          return;
+        }
+        entity.setDepth(40);
+      },
+    );
 
-    this.input.on('drag', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject, dragX: number, dragY: number) => {
-      const entity = this.findEntityBySprite(target);
-      if (!entity) {
-        return;
-      }
-      entity.setWorldPosition(dragX, dragY);
-    });
+    this.input.on(
+      'drag',
+      (
+        _pointer: Phaser.Input.Pointer,
+        target: Phaser.GameObjects.GameObject,
+        dragX: number,
+        dragY: number,
+      ) => {
+        const entity = this.findEntityBySprite(target);
+        if (!entity) {
+          return;
+        }
+        entity.setWorldPosition(dragX, dragY);
+      },
+    );
 
-    this.input.on('dragend', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
-      const entity = this.findEntityBySprite(target);
-      if (!entity) {
-        return;
-      }
+    this.input.on(
+      'dragend',
+      (
+        _pointer: Phaser.Input.Pointer,
+        target: Phaser.GameObjects.GameObject,
+      ) => {
+        const entity = this.findEntityBySprite(target);
+        if (!entity) {
+          return;
+        }
 
-      const dropCell = this.cellFromWorld(entity.sprite.x, entity.sprite.y);
-      if (!dropCell) {
-        entity.setGridPosition(entity.position);
-        entity.setDepth(2);
-        return;
-      }
+        const dropCell = this.cellFromWorld(entity.sprite.x, entity.sprite.y);
+        if (!dropCell) {
+          entity.setGridPosition(entity.position);
+          entity.setDepth(2);
+          return;
+        }
 
-      const targetRuntimeId = this.grid.get(dropCell);
-      if (!targetRuntimeId || targetRuntimeId === entity.runtimeId) {
+        const targetRuntimeId = this.grid.get(dropCell);
+        if (!targetRuntimeId || targetRuntimeId === entity.runtimeId) {
+          this.grid.clear(entity.position);
+          this.grid.set(dropCell, entity.runtimeId);
+          entity.setGridPosition(dropCell);
+          entity.setDepth(2);
+          void this.persistState('drag_move');
+          return;
+        }
+
+        const targetEntity = this.runtimeItems.get(targetRuntimeId);
+        if (!targetEntity) {
+          entity.setGridPosition(entity.position);
+          entity.setDepth(2);
+          return;
+        }
+
+        const merge = this.mergeResolver.canMerge({
+          sourceId: entity.item.id,
+          targetId: targetEntity.item.id,
+        });
+        if (!merge.canMerge || !merge.nextItemId) {
+          entity.setGridPosition(entity.position);
+          entity.setDepth(2);
+          return;
+        }
+
+        const next = this.itemsById.get(merge.nextItemId);
+        if (!next) {
+          entity.setGridPosition(entity.position);
+          entity.setDepth(2);
+          return;
+        }
+
         this.grid.clear(entity.position);
-        this.grid.set(dropCell, entity.runtimeId);
-        entity.setGridPosition(dropCell);
-        entity.setDepth(2);
-        void this.persistState('drag_move');
-        return;
-      }
+        this.grid.clear(targetEntity.position);
 
-      const targetEntity = this.runtimeItems.get(targetRuntimeId);
-      if (!targetEntity) {
-        entity.setGridPosition(entity.position);
-        entity.setDepth(2);
-        return;
-      }
+        this.removeRuntimeEntity(entity);
+        this.removeRuntimeEntity(targetEntity);
 
-      const merge = this.mergeResolver.canMerge({ sourceId: entity.item.id, targetId: targetEntity.item.id });
-      if (!merge.canMerge || !merge.nextItemId) {
-        entity.setGridPosition(entity.position);
-        entity.setDepth(2);
-        return;
-      }
+        const mergedRuntimeId = crypto.randomUUID();
+        this.grid.set(dropCell, mergedRuntimeId);
+        const merged = this.addRuntimeItem(mergedRuntimeId, next, dropCell);
+        merged.setDepth(3);
+        this.tweens.add({
+          targets: [merged.sprite, merged.label],
+          scale: { from: 1.25, to: 1 },
+          duration: 180,
+        });
 
-      const next = this.itemsById.get(merge.nextItemId);
-      if (!next) {
-        entity.setGridPosition(entity.position);
-        entity.setDepth(2);
-        return;
-      }
-
-      this.grid.clear(entity.position);
-      this.grid.clear(targetEntity.position);
-
-      this.removeRuntimeEntity(entity);
-      this.removeRuntimeEntity(targetEntity);
-
-      const mergedRuntimeId = crypto.randomUUID();
-      this.grid.set(dropCell, mergedRuntimeId);
-      const merged = this.addRuntimeItem(mergedRuntimeId, next, dropCell);
-      merged.setDepth(3);
-      this.tweens.add({ targets: [merged.sprite, merged.label], scale: { from: 1.25, to: 1 }, duration: 180 });
-
-      this.questEngine.onEvent('merge_done', 1);
-      this.showToast(`Merge: ${next.name}`);
-      this.refreshHud();
-      void this.persistState('merge');
-    });
+        this.questEngine.onEvent('merge_done', 1);
+        this.showToast(`Merge: ${next.name}`);
+        this.refreshHud();
+        void this.persistState('merge');
+      },
+    );
   }
 
   private bindGeneratorTap(): void {
-    this.input.on('gameobjectup', (_pointer: Phaser.Input.Pointer, target: Phaser.GameObjects.GameObject) => {
-      const entity = this.findEntityBySprite(target);
-      if (!entity?.item.generator) {
-        return;
-      }
-      const generator = entity.item.generator;
-      const hasCharge = this.generators.spendCharge(entity.runtimeId, generator);
-      if (!hasCharge) {
-        this.showToast(localizationManager.t('merge.generatorCooldown'));
-        return;
-      }
+    this.input.on(
+      'gameobjectup',
+      (
+        _pointer: Phaser.Input.Pointer,
+        target: Phaser.GameObjects.GameObject,
+      ) => {
+        const entity = this.findEntityBySprite(target);
+        if (!entity?.item.generator) {
+          return;
+        }
+        const generator = this.getBoostedGenerator(entity.item.generator);
+        const hasCharge = this.generators.spendCharge(
+          entity.runtimeId,
+          generator,
+        );
+        if (!hasCharge) {
+          this.showToast(localizationManager.t('merge.generatorCooldown'));
+          return;
+        }
 
-      const spawnTarget = this.inventory.placeToFreeCell(crypto.randomUUID());
-      if (!spawnTarget) {
-        const overflow = this.overflowPolicy.resolveNoSpace();
-        this.dust += overflow.grantedDust;
-        this.showToast(localizationManager.t('merge.overflow', { dust: overflow.grantedDust }));
+        const spawnTarget = this.inventory.placeToFreeCell(crypto.randomUUID());
+        if (!spawnTarget) {
+          const overflow = this.overflowPolicy.resolveNoSpace();
+          this.dust += overflow.grantedDust;
+          this.showToast(
+            localizationManager.t('merge.overflow', {
+              dust: overflow.grantedDust,
+            }),
+          );
+          this.refreshHud();
+          void this.persistState('overflow');
+          return;
+        }
+
+        const produced = this.itemsById.get(generator.producesItemId);
+        if (!produced) {
+          return;
+        }
+
+        const runtimeId = this.grid.get(spawnTarget);
+        if (!runtimeId) {
+          return;
+        }
+        this.addRuntimeItem(runtimeId, produced, spawnTarget);
+        this.questEngine.onEvent('generator_spawn', 1);
+        this.showToast(`+ ${produced.name}`);
         this.refreshHud();
-        void this.persistState('overflow');
-        return;
-      }
-
-      const produced = this.itemsById.get(generator.producesItemId);
-      if (!produced) {
-        return;
-      }
-
-      const runtimeId = this.grid.get(spawnTarget);
-      if (!runtimeId) {
-        return;
-      }
-      this.addRuntimeItem(runtimeId, produced, spawnTarget);
-      this.questEngine.onEvent('generator_spawn', 1);
-      this.showToast(`+ ${produced.name}`);
-      this.refreshHud();
-      void this.persistState('generator_spawn');
-    });
+        void this.persistState('generator_spawn');
+      },
+    );
   }
 
-  private addRuntimeItem(runtimeId: string, item: ItemDefinition, position: GridPosition): ItemEntity {
+  private addRuntimeItem(
+    runtimeId: string,
+    item: ItemDefinition,
+    position: GridPosition,
+  ): ItemEntity {
     const entity = new ItemEntity(this, runtimeId, item, position, GRID_ORIGIN);
     this.runtimeItems.set(runtimeId, entity);
     this.entityBySprite.set(entity.sprite, entity);
@@ -382,11 +497,20 @@ export class MergeScene extends Phaser.Scene {
         return;
       }
       for (let i = 0; i < flags.rewardedMergeGeneratorCharges; i += 1) {
-        const state = this.generators.getState(entity.runtimeId, entity.item.generator);
-        if (state.charges >= entity.item.generator.maxCharges) {
+        const boostedGenerator = this.getBoostedGenerator(
+          entity.item.generator,
+        );
+        const state = this.generators.getState(
+          entity.runtimeId,
+          boostedGenerator,
+        );
+        if (state.charges >= boostedGenerator.maxCharges) {
           break;
         }
-        state.charges = Math.min(entity.item.generator.maxCharges, state.charges + 1);
+        state.charges = Math.min(
+          boostedGenerator.maxCharges,
+          state.charges + 1,
+        );
         state.lastRefillAt = Date.now();
         granted += 1;
       }
@@ -418,7 +542,25 @@ export class MergeScene extends Phaser.Scene {
     return true;
   }
 
-  private findEntityBySprite(target: Phaser.GameObjects.GameObject): ItemEntity | null {
+  private getBoostedGenerator(generator: GeneratorConfig): GeneratorConfig {
+    return {
+      ...generator,
+      rechargeSeconds: Math.max(
+        1,
+        Math.round(
+          generator.rechargeSeconds * this.bonuses.merge.generatorRechargeMult,
+        ),
+      ),
+      maxCharges: Math.max(
+        1,
+        generator.maxCharges + this.bonuses.merge.generatorMaxChargesAdd,
+      ),
+    };
+  }
+
+  private findEntityBySprite(
+    target: Phaser.GameObjects.GameObject,
+  ): ItemEntity | null {
     return this.entityBySprite.get(target) ?? null;
   }
 
@@ -437,8 +579,12 @@ export class MergeScene extends Phaser.Scene {
   }
 
   private refreshHud(): void {
-    this.goldText.setText(localizationManager.t('merge.gold', { value: this.gold }));
-    this.dustText.setText(localizationManager.t('merge.dust', { value: this.dust }));
+    this.goldText.setText(
+      localizationManager.t('merge.gold', { value: this.gold }),
+    );
+    this.dustText.setText(
+      localizationManager.t('merge.dust', { value: this.dust }),
+    );
   }
 
   private tryStartTutorial(): void {
@@ -446,25 +592,44 @@ export class MergeScene extends Phaser.Scene {
       return;
     }
 
-    this.tutorialOverlay = this.add.rectangle(this.scale.width * 0.5, this.scale.height * 0.5, this.scale.width, this.scale.height, 0x020617, 0.7).setDepth(200);
-    this.tutorialFrame = this.add.rectangle(0, 0, 100, 100, 0x000000, 0).setStrokeStyle(4, 0xfde68a).setDepth(201);
-    this.tutorialText = this.add.text(this.scale.width * 0.5, 560, '', {
-      color: '#f8fafc',
-      fontSize: '28px',
-      align: 'center',
-      backgroundColor: '#1e293b',
-      padding: { x: 14, y: 10 },
-      wordWrap: { width: 980 },
-    }).setOrigin(0.5).setDepth(202);
+    this.tutorialOverlay = this.add
+      .rectangle(
+        this.scale.width * 0.5,
+        this.scale.height * 0.5,
+        this.scale.width,
+        this.scale.height,
+        0x020617,
+        0.7,
+      )
+      .setDepth(200);
+    this.tutorialFrame = this.add
+      .rectangle(0, 0, 100, 100, 0x000000, 0)
+      .setStrokeStyle(4, 0xfde68a)
+      .setDepth(201);
+    this.tutorialText = this.add
+      .text(this.scale.width * 0.5, 560, '', {
+        color: '#f8fafc',
+        fontSize: '28px',
+        align: 'center',
+        backgroundColor: '#1e293b',
+        padding: { x: 14, y: 10 },
+        wordWrap: { width: 980 },
+      })
+      .setOrigin(0.5)
+      .setDepth(202);
 
-    this.tutorialButton = this.add.rectangle(this.scale.width * 0.5, 650, 220, 64, 0x14532d, 0.98)
+    this.tutorialButton = this.add
+      .rectangle(this.scale.width * 0.5, 650, 220, 64, 0x14532d, 0.98)
       .setStrokeStyle(2, 0x86efac)
       .setDepth(202)
       .setInteractive({ useHandCursor: true });
-    this.tutorialButtonLabel = this.add.text(this.scale.width * 0.5, 650, '', {
-      color: '#ecfeff',
-      fontSize: '28px',
-    }).setOrigin(0.5).setDepth(203);
+    this.tutorialButtonLabel = this.add
+      .text(this.scale.width * 0.5, 650, '', {
+        color: '#ecfeff',
+        fontSize: '28px',
+      })
+      .setOrigin(0.5)
+      .setDepth(203);
 
     this.tutorialButton.on('pointerup', () => {
       this.tutorialStep += 1;

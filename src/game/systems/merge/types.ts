@@ -46,6 +46,17 @@ export interface EconomyConfig {
     costDust: number;
     unlockFlag?: string;
     unlockChapterId?: string;
+    effects?: {
+      merge?: {
+        generatorRechargeMult?: number;
+        generatorMaxChargesAdd?: number;
+      };
+      raid?: {
+        defenderDpsMult?: number;
+        baseHpAdd?: number;
+        spellCooldownMult?: number;
+      };
+    };
   }>;
 }
 

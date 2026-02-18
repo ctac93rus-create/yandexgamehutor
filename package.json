@@ -10,7 +10,9 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "zip": "tsx scripts/zip_dist.ts"
+    "zip": "tsx scripts/zip_dist.ts",
+    "format": "prettier . --write",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "phaser": "^3.90.0",
