@@ -20,6 +20,8 @@ import { ProgressScene } from './scenes/ProgressScene';
 
 export class GameApp {
   private game: Phaser.Game | null = null;
+  private audioManager: AudioManager | null = null;
+  private paused = false;
 
   public async start(): Promise<void> {
     localizationManager.init();
@@ -79,34 +81,57 @@ export class GameApp {
     this.bindPauseResume();
   }
 
+  public pauseGame(): void {
+    if (!this.game || !this.audioManager) {
+      return;
+    }
+
+    this.paused = true;
+    this.game.loop.sleep();
+    this.audioManager.pauseAll();
+    sfxManager.onGamePause();
+  }
+
+  public resumeGame(): void {
+    if (!this.game || !this.audioManager) {
+      return;
+    }
+
+    this.paused = false;
+    this.audioManager.resumeAll();
+    sfxManager.onGameResume();
+    this.game.loop.wake();
+  }
+
+  public getAudioState(): { phaserMutedOrPaused: boolean; audioContextState?: AudioContextState } {
+    const contextState = (this.game?.sound as { context?: { state?: AudioContextState } } | undefined)?.context?.state;
+    const mutedOrPaused = Boolean(this.game?.sound.mute || this.paused);
+    return {
+      phaserMutedOrPaused: mutedOrPaused,
+      audioContextState: contextState,
+    };
+  }
+
   private bindPauseResume(): void {
     if (!this.game) {
       return;
     }
 
-    const audioManager = new AudioManager(this.game.sound);
+    this.audioManager = new AudioManager(this.game.sound);
 
     sdkManager.on('game_api_pause', () => {
-      this.game?.loop.sleep();
-      audioManager.pauseAll();
-      sfxManager.onGamePause();
+      this.pauseGame();
     });
 
     sdkManager.on('game_api_resume', () => {
-      audioManager.resumeAll();
-      sfxManager.onGameResume();
-      this.game?.loop.wake();
+      this.resumeGame();
     });
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        this.game?.loop.sleep();
-        audioManager.pauseAll();
-        sfxManager.onGamePause();
+        this.pauseGame();
       } else {
-        audioManager.resumeAll();
-        sfxManager.onGameResume();
-        this.game?.loop.wake();
+        this.resumeGame();
       }
     });
   }
