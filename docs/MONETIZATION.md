@@ -30,13 +30,18 @@ Rewarded видео используются в 3 точках:
 `PurchasesManager` реализует:
 - `getCatalog()`
 - `purchase(productId)`
-- auto-consume для consumable после начисления награды (`consumePurchase`).
+- `registerProduct(productId, { kind, onGrant })` для `consumable`/`nonConsumable`.
+
+Типы продуктов:
+- `consumable`: после успешного `onGrant` обязательно вызывается `consumePurchase(purchaseToken)`.
+- `nonConsumable` (например `disable_ads`): после `onGrant` покупка **не** consume-ится.
 
 ### Pending purchases
 На старте приложения вызывается `processPendingPurchases()`:
 - `getPurchases()`
-- доначисление для известных consumable SKU
-- `consumePurchase()` для обработанных токенов.
+- доначисление/выдача для известных SKU
+- для `consumable` выполняется `consumePurchase()`
+- для `nonConsumable` ownership восстанавливается через `EntitlementsManager` без `consumePurchase()`.
 
 ## Remote flags
 Flags читаются 1 раз на старте (`RemoteConfigManager.init` -> `sdk.getFlags({ defaultFlags })`).

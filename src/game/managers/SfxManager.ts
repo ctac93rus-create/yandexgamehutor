@@ -19,6 +19,7 @@ export class SfxManager {
   private context: AudioContext | null = null;
   private unlocked = false;
   private unlockBound = false;
+  private wasRunningBeforePause = false;
 
   public constructor() {
     this.bindGestureUnlock();
@@ -67,6 +68,37 @@ export class SfxManager {
       return;
     }
     if (context.state === 'suspended') {
+      void context.resume();
+    }
+  }
+
+  public onGamePause(): void {
+    const context = this.context;
+    if (!context) {
+      this.wasRunningBeforePause = false;
+      return;
+    }
+
+    this.wasRunningBeforePause = context.state === 'running';
+    if (this.wasRunningBeforePause) {
+      void context.suspend();
+    }
+  }
+
+  public onGameResume(): void {
+    const context = this.context;
+    if (!context) {
+      this.wasRunningBeforePause = false;
+      return;
+    }
+
+    const shouldResume =
+      this.wasRunningBeforePause &&
+      this.unlocked &&
+      settingsManager.getState().sfxEnabled &&
+      context.state === 'suspended';
+    this.wasRunningBeforePause = false;
+    if (shouldResume) {
       void context.resume();
     }
   }

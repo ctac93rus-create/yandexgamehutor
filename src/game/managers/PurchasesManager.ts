@@ -14,11 +14,29 @@ interface PurchaseRecord {
 
 type GrantHandler = (purchase: PurchaseRecord) => Promise<void>;
 
+type ProductKind = 'consumable' | 'nonConsumable';
+
+interface RegisteredProduct {
+  kind: ProductKind;
+  onGrant: GrantHandler;
+}
+
 export class PurchasesManager {
-  private handlers = new Map<string, GrantHandler>();
+  private handlers = new Map<string, RegisteredProduct>();
+
+  public registerProduct(
+    productId: string,
+    input: { kind: ProductKind; onGrant: GrantHandler },
+  ): void {
+    this.handlers.set(productId, input);
+  }
 
   public registerConsumable(productId: string, onGrant: GrantHandler): void {
-    this.handlers.set(productId, onGrant);
+    this.registerProduct(productId, { kind: 'consumable', onGrant });
+  }
+
+  public registerNonConsumable(productId: string, onGrant: GrantHandler): void {
+    this.registerProduct(productId, { kind: 'nonConsumable', onGrant });
   }
 
   public async getCatalog(): Promise<CatalogProduct[]> {
@@ -43,13 +61,15 @@ export class PurchasesManager {
     }
 
     const purchase = await payments.purchase({ id: productId });
-    const handler = this.handlers.get(purchase.id);
-    if (!handler) {
+    const registration = this.handlers.get(purchase.id);
+    if (!registration) {
       return false;
     }
 
-    await handler(purchase);
-    await payments.consumePurchase(purchase.purchaseToken);
+    await registration.onGrant(purchase);
+    if (registration.kind === 'consumable') {
+      await payments.consumePurchase(purchase.purchaseToken);
+    }
     return true;
   }
 
@@ -64,12 +84,14 @@ export class PurchasesManager {
 
     for (let i = 0; i < pending.length; i += 1) {
       const purchase = pending[i];
-      const handler = this.handlers.get(purchase.id);
-      if (!handler) {
+      const registration = this.handlers.get(purchase.id);
+      if (!registration) {
         continue;
       }
-      await handler(purchase);
-      await payments.consumePurchase(purchase.purchaseToken);
+      await registration.onGrant(purchase);
+      if (registration.kind === 'consumable') {
+        await payments.consumePurchase(purchase.purchaseToken);
+      }
       processed += 1;
     }
 
