@@ -96,6 +96,32 @@ function yandexSdkMockPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [yandexSdkMockPlugin()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('/src/game/scenes/')) {
+            if (id.includes('MergeScene')) return 'scene-merge';
+            if (id.includes('HutScene')) return 'scene-hut';
+            if (id.includes('RaidScene')) return 'scene-raid';
+            if (id.includes('SocialScene')) return 'scene-social';
+            if (id.includes('SettingsScene')) return 'scene-settings';
+            if (id.includes('ProgressScene')) return 'scene-progress';
+          }
+
+          if (id.includes('/src/game/managers/PurchasesManager')) {
+            return 'manager-purchases';
+          }
+
+          if (id.includes('/src/game/data/localization/')) {
+            return 'data-localization';
+          }
+
+          return undefined;
+        },
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],

@@ -35,6 +35,7 @@ import { QuestEngine } from '../systems/quests/QuestEngine';
 import type { MetaProgressState } from '../systems/quests/types';
 import type { RaidReward } from '../systems/raid/RewardCalculator';
 import type { MetaBonuses } from '../systems/meta/bonuses';
+import { ensureLazyScene } from './lazySceneLoader';
 
 const GRID_ROWS = 6;
 const GRID_COLS = 7;
@@ -140,6 +141,11 @@ export class MergeScene extends Phaser.Scene {
     this.tryStartTutorial();
   }
 
+  private async startLazyScene(target: string, data?: Record<string, unknown>): Promise<void> {
+    await ensureLazyScene(this, target);
+    this.scene.start(target, data);
+  }
+
   private bootstrapData(): void {
     const parsedItems = itemsSchema.parse(itemsJson);
     const parsedChains = mergeChainsSchema.parse(chainsJson);
@@ -208,10 +214,10 @@ export class MergeScene extends Phaser.Scene {
       this.scene.start('MenuScene'),
     );
     this.makeButton(255, navY, localizationManager.t('common.toHut'), () =>
-      this.scene.start('HutScene'),
+      void this.startLazyScene('HutScene'),
     );
     this.makeButton(410, navY, localizationManager.t('common.toRaid'), () =>
-      this.scene.start('RaidScene', { bonuses: this.bonuses }),
+      void this.startLazyScene('RaidScene', { bonuses: this.bonuses }),
     );
     this.makeButton(
       735,

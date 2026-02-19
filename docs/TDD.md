@@ -44,3 +44,10 @@
 - Валидация `items.json`, `merge_chains.json`, `economy.json`, `waves.json` через `zod` в рантайме.
 - Политика SDK-only сохранена: доступ к SDK только через `SDKManager`.
 - При rewarded в рейде удвоение выполняется через `showRewardedVideo` callback `onRewarded`.
+
+## Release hardening (code-splitting)
+- Initial scene set сокращён до `BootScene`, `PreloadScene`, `MenuScene`.
+- Тяжёлые сцены (`Merge`, `Hut`, `Raid`, `Social`, `Settings`, `Progress`) подключаются через dynamic `import()` из `lazySceneLoader`.
+- Перед `scene.start(...)` используется guard, чтобы не вызывать `scene.add(...)` повторно, если сцена уже зарегистрирована.
+- `MenuScene` показывает лёгкий `Loading…` overlay во время lazy-загрузки, после чего запускает целевую сцену.
+- Подход уменьшает стартовый chunk и оставляет runtime-поведение совместимым с `LoadingAPI.ready()` (по-прежнему вызывается в `MenuScene` один раз).

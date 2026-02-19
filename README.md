@@ -11,7 +11,9 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+npm run build:report
 npm run zip
+npm run release:prepare
 ```
 
 ## Локальная разработка
@@ -30,12 +32,15 @@ npm run zip
    - `npm run lint`
    - `npm run typecheck`
    - `npm run test`
-   - `npm run build`
-2. Запустить упаковку одной командой:
+2. Снять отчёт по размеру бандла:
+   - `npm run build:report`
+3. Подготовить upload-ready архив:
    - `npm run zip`
-   - Скрипт сам вызывает build и создаёт `dist_zip/yandexgamehutor.zip`.
-3. В кабинете Яндекс Игр загрузить zip-архив из `dist_zip/`.
-4. Перед отправкой на модерацию пройти `docs/MODERATION_CHECKLIST.md`.
+   - результат: `artifacts/dist.zip`
+   - в корне архива должен быть `index.html` (без вложенной папки `dist/`)
+4. Либо сделать всё за один проход:
+   - `npm run release:prepare`
+5. Перед отправкой на модерацию пройти `docs/RELEASE_CHECKLIST.md` и `docs/MODERATION_CHECKLIST.md`.
 
 ## Релизный smoke-check (ручной)
 - Merge: 5 минут core loop без зависаний/просадок.

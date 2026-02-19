@@ -35,6 +35,7 @@ import type {
 import type { MetaBonuses } from '../systems/meta/bonuses';
 import { RaidHUD } from '../ui/hud/RaidHUD';
 import { RewardModal } from '../ui/hud/RewardModal';
+import { ensureLazyScene } from './lazySceneLoader';
 
 const LANES: LaneGeometry[] = [
   { index: 0, spawnX: 1230, baseX: 120, y: 220 },
@@ -285,7 +286,7 @@ export class RaidScene extends Phaser.Scene {
       void leaderboardsManager.submitBestRaidKills(updatedBest);
     }
 
-    this.scene.start('MergeScene', {
+    void this.startLazyScene('MergeScene', {
       raidReward: reward,
       raidMeta: result,
     });
@@ -330,4 +331,9 @@ export class RaidScene extends Phaser.Scene {
       this.add.rectangle(lane.baseX, lane.y, 40, 70, 0x991b1b).setDepth(4);
     }
   }
+  private async startLazyScene(target: string, data?: Record<string, unknown>): Promise<void> {
+    await ensureLazyScene(this, target);
+    this.scene.start(target, data);
+  }
+
 }

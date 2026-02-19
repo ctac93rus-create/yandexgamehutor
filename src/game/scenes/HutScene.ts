@@ -21,6 +21,7 @@ import type {
 } from '../systems/quests/types';
 import { HutUpgradesPanel } from '../ui/hut/HutUpgradesPanel';
 import { QuestPanel } from '../ui/hut/QuestPanel';
+import { ensureLazyScene } from './lazySceneLoader';
 
 export class HutScene extends Phaser.Scene {
   private saveState!: SaveState;
@@ -140,14 +141,14 @@ export class HutScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         sfxManager.playClick();
-        this.scene.start('MergeScene');
+        void this.startLazyScene('MergeScene');
       });
     this.add
       .text(190, 678, localizationManager.t('common.toRaid'), navStyle)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
         sfxManager.playClick();
-        this.scene.start('RaidScene', {
+        void this.startLazyScene('RaidScene', {
           bonuses: computeBonuses(this.meta, this.saveEconomy),
         });
       });
@@ -207,6 +208,12 @@ export class HutScene extends Phaser.Scene {
     }
 
     this.refreshHud();
+  }
+
+
+  private async startLazyScene(target: string, data?: Record<string, unknown>): Promise<void> {
+    await ensureLazyScene(this, target);
+    this.scene.start(target, data);
   }
 
   private async claimRewardedBooster(): Promise<void> {
