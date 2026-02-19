@@ -1,6 +1,7 @@
 import { sdkManager } from './SDKManager';
 import { remoteConfigManager } from './RemoteConfigManager';
 import { getEconomyTuning } from '../systems/economy/EconomyTuning';
+import { entitlementsManager } from './EntitlementsManager';
 
 export type RewardedPlacement = 'raid_double_reward' | 'merge_generator_charge' | 'hut_booster';
 
@@ -13,7 +14,8 @@ export class AdsManager {
   public async showRewarded(_placement: RewardedPlacement, onRewarded: () => void): Promise<boolean> {
     const flags = remoteConfigManager.getFlags();
     const tuning = getEconomyTuning(flags);
-    if (flags.disableAds && !flags.allowRewardedWhenAdsDisabled) {
+    const purchasedDisableAds = entitlementsManager.getState().disableAds;
+    if ((purchasedDisableAds || flags.disableAds) && !flags.allowRewardedWhenAdsDisabled) {
       return false;
     }
     const now = Date.now();
@@ -51,7 +53,7 @@ export class AdsManager {
   private async showInterstitialIfNeeded(reason: 'raid' | 'screen'): Promise<boolean> {
     const flags = remoteConfigManager.getFlags();
     const tuning = getEconomyTuning(flags);
-    if (flags.disableAds) {
+    if (entitlementsManager.getState().disableAds || flags.disableAds) {
       return false;
     }
     const now = Date.now();

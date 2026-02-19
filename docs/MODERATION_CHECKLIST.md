@@ -4,6 +4,7 @@
 - [x] `LoadingAPI.ready()` вызывается ровно один раз через `sdkManager.loadingReadyOnce()` в `MenuScene`.
 - [x] Пауза/возобновление (`game_api_pause` / `game_api_resume`) подключены в `GameApp.bindPauseResume()`.
 - [x] В паузе останавливается game loop и аудио; при resume всё корректно восстанавливается.
+- [x] `game_api_pause`/`game_api_resume` и `visibilitychange` глушат и восстанавливают как Phaser Sound (`AudioManager`), так и WebAudio `AudioContext` в `SfxManager`.
 
 ## B. Rewarded & interstitial compliance
 - [x] Rewarded точки интегрированы (raid reward x2, merge charge, hut booster).

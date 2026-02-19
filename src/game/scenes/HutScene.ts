@@ -4,6 +4,7 @@ import dailyJson from '../data/quests_daily.json';
 import storyJson from '../data/quests_story.json';
 import economyJson from '../data/economy.json';
 import { adsManager } from '../managers/AdsManager';
+import { entitlementsManager } from '../managers/EntitlementsManager';
 import { purchasesManager } from '../managers/PurchasesManager';
 import { localizationManager } from '../managers/LocalizationManager';
 import { remoteConfigManager } from '../managers/RemoteConfigManager';
@@ -182,6 +183,29 @@ export class HutScene extends Phaser.Scene {
         void this.buyGoldPack();
       });
 
+    const disableAdsBought = entitlementsManager.getState().disableAds;
+    const disableAdsButton = this.add.text(
+      980,
+      678,
+      disableAdsBought
+        ? localizationManager.t('hut.disableAdsBought')
+        : localizationManager.t('hut.disableAds'),
+      {
+        ...navStyle,
+        backgroundColor: disableAdsBought ? '#14532d' : '#1d4ed8',
+        color: '#dbeafe',
+      },
+    );
+
+    if (!disableAdsBought) {
+      disableAdsButton
+        .setInteractive({ useHandCursor: true })
+        .on('pointerup', () => {
+          sfxManager.playClick();
+          void this.buyDisableAds();
+        });
+    }
+
     this.refreshHud();
   }
 
@@ -209,6 +233,25 @@ export class HutScene extends Phaser.Scene {
     sfxManager.playSuccess();
     this.showToast(localizationManager.t('hut.purchaseApplied'));
     this.refreshHud();
+  }
+
+  private async buyDisableAds(): Promise<void> {
+    if (entitlementsManager.getState().disableAds) {
+      sfxManager.playError();
+      this.showToast(localizationManager.t('hut.disableAdsBought'));
+      return;
+    }
+
+    const success = await purchasesManager.purchase('disable_ads');
+    if (!success) {
+      sfxManager.playError();
+      this.showToast(localizationManager.t('hut.purchaseUnavailable'));
+      return;
+    }
+
+    sfxManager.playSuccess();
+    this.showToast(localizationManager.t('hut.disableAdsApplied'));
+    this.scene.restart();
   }
 
   private async buyUpgrade(id: string): Promise<void> {

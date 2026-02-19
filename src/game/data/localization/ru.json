@@ -55,7 +55,10 @@
     "purchaseApplied": "Покупка применена",
     "alreadyBought": "Уже куплено",
     "notEnough": "Недостаточно ресурсов",
-    "upgradeBought": "Куплен апгрейд: {{title}}"
+    "upgradeBought": "Куплен апгрейд: {{title}}",
+    "disableAds": "Отключить рекламу (IAP)",
+    "disableAdsBought": "Куплено: без рекламы",
+    "disableAdsApplied": "Реклама отключена навсегда"
   },
   "raid": {
     "title": "Рейд",

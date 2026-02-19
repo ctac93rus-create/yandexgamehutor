@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from './managers/AudioManager';
+import { entitlementsManager } from './managers/EntitlementsManager';
 import { purchasesManager } from './managers/PurchasesManager';
 import { remoteConfigManager } from './managers/RemoteConfigManager';
 import { saveManager } from './managers/SaveManager';
 import { sdkManager } from './managers/SDKManager';
 import { localizationManager } from './managers/LocalizationManager';
+import { sfxManager } from './managers/SfxManager';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { HutScene } from './scenes/HutScene';
@@ -23,6 +25,7 @@ export class GameApp {
     localizationManager.init();
     await sdkManager.init();
     await remoteConfigManager.init();
+    await entitlementsManager.load();
 
     purchasesManager.registerConsumable('pack_gold_small', async () => {
       const save = await saveManager.load();
@@ -38,6 +41,13 @@ export class GameApp {
       }
       await saveManager.save({ ...save, dust: save.dust + 125 });
     });
+    purchasesManager.registerNonConsumable('disable_ads', async () => {
+      if (entitlementsManager.getState().disableAds) {
+        return;
+      }
+      await entitlementsManager.setDisableAds(true);
+    });
+
     await purchasesManager.processPendingPurchases();
 
     this.game = new Phaser.Game({
@@ -79,11 +89,25 @@ export class GameApp {
     sdkManager.on('game_api_pause', () => {
       this.game?.loop.sleep();
       audioManager.pauseAll();
+      sfxManager.onGamePause();
     });
 
     sdkManager.on('game_api_resume', () => {
       audioManager.resumeAll();
+      sfxManager.onGameResume();
       this.game?.loop.wake();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.game?.loop.sleep();
+        audioManager.pauseAll();
+        sfxManager.onGamePause();
+      } else {
+        audioManager.resumeAll();
+        sfxManager.onGameResume();
+        this.game?.loop.wake();
+      }
     });
   }
 }

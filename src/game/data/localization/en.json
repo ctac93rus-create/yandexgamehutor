@@ -55,7 +55,10 @@
     "purchaseApplied": "Purchase applied",
     "alreadyBought": "Already purchased",
     "notEnough": "Not enough resources",
-    "upgradeBought": "Upgrade purchased: {{title}}"
+    "upgradeBought": "Upgrade purchased: {{title}}",
+    "disableAds": "Disable ads (IAP)",
+    "disableAdsBought": "Purchased: ads disabled",
+    "disableAdsApplied": "Ads are permanently disabled"
   },
   "raid": {
     "title": "Raid",
