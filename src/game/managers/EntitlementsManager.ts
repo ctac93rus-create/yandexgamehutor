@@ -79,7 +79,11 @@ export class EntitlementsManager {
       if (!player) {
         return;
       }
-      await player.setData({ [ENTITLEMENTS_KEY]: state });
+      const current = await player.getData();
+      await player.setData({
+        ...current,
+        [ENTITLEMENTS_KEY]: state,
+      });
     } catch {
       // no-op fallback for local/mock environments
     }

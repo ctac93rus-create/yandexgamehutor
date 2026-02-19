@@ -8,10 +8,24 @@ export interface YandexPlayer {
   incrementStats(data: Record<string, number>): Promise<Record<string, number>>;
 }
 
+export interface YandexPaymentProduct extends Record<string, unknown> {
+  id?: string;
+  productID?: string;
+  title?: string;
+  description?: string;
+  price?: string;
+}
+
+export interface YandexPaymentPurchase extends Record<string, unknown> {
+  id?: string;
+  productID?: string;
+  purchaseToken: string;
+}
+
 export interface YandexPayments {
-  getCatalog(): Promise<{ products: Array<Record<string, unknown>> }>;
-  purchase(input: { id: string }): Promise<{ id: string; purchaseToken: string }>;
-  getPurchases(): Promise<Array<{ id: string; purchaseToken: string }>>;
+  getCatalog(): Promise<YandexPaymentProduct[] | { products: YandexPaymentProduct[] }>;
+  purchase(input: { id: string }): Promise<YandexPaymentPurchase>;
+  getPurchases(): Promise<YandexPaymentPurchase[]>;
   consumePurchase(token: string): Promise<void>;
 }
 

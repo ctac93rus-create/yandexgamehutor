@@ -20,6 +20,7 @@ export class SfxManager {
   private unlocked = false;
   private unlockBound = false;
   private wasRunningBeforePause = false;
+  private pauseDepth = 0;
 
   public constructor() {
     this.bindGestureUnlock();
@@ -73,6 +74,11 @@ export class SfxManager {
   }
 
   public onGamePause(): void {
+    this.pauseDepth += 1;
+    if (this.pauseDepth > 1) {
+      return;
+    }
+
     const context = this.context;
     if (!context) {
       this.wasRunningBeforePause = false;
@@ -86,6 +92,16 @@ export class SfxManager {
   }
 
   public onGameResume(): void {
+    if (this.pauseDepth <= 0) {
+      this.wasRunningBeforePause = false;
+      return;
+    }
+
+    this.pauseDepth -= 1;
+    if (this.pauseDepth > 0) {
+      return;
+    }
+
     const context = this.context;
     if (!context) {
       this.wasRunningBeforePause = false;
