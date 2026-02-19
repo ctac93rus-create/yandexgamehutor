@@ -5,6 +5,7 @@ import { sdkManager } from '../managers/SDKManager';
 import { localizationManager } from '../managers/LocalizationManager';
 import { sfxManager } from '../managers/SfxManager';
 import { createMenuButton, type MenuIconType } from '../ui/menu/MenuButtonFactory';
+import { ensureLazyScene } from './lazySceneLoader';
 
 interface MenuItem {
   titleKey: string;
@@ -71,7 +72,7 @@ export class MenuScene extends Phaser.Scene {
         icon: item.icon,
         onClick: () => {
           sfxManager.playClick();
-          this.scene.start(item.target, item.data);
+          void this.openScene(item.target, item.data);
         },
       });
     });
@@ -79,5 +80,27 @@ export class MenuScene extends Phaser.Scene {
     this.time.delayedCall(0, () => {
       sdkManager.loadingReadyOnce();
     });
+  }
+
+  private async openScene(target: string, data?: Record<string, unknown>): Promise<void> {
+    const overlay = this.add
+      .rectangle(this.scale.width * 0.5, this.scale.height * 0.5, 280, 82, 0x0f172a, 0.95)
+      .setStrokeStyle(2, 0x38bdf8)
+      .setDepth(1000);
+
+    const label = this.add
+      .text(this.scale.width * 0.5, this.scale.height * 0.5, 'Loading…', {
+        color: '#e2e8f0',
+        fontSize: '28px',
+      })
+      .setOrigin(0.5)
+      .setDepth(1001);
+
+    await ensureLazyScene(this, target);
+
+    label.destroy();
+    overlay.destroy();
+
+    this.scene.start(target, data);
   }
 }
