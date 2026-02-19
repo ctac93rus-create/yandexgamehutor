@@ -180,8 +180,8 @@ export class SDKManager {
         },
       }),
       getPayments: async () => ({
-        getCatalog: async () => ({ products: [] }),
-        purchase: async ({ id }) => ({ id, purchaseToken: Date.now().toString() }),
+        getCatalog: async () => [],
+        purchase: async ({ id }) => ({ id, productID: id, purchaseToken: Date.now().toString() }),
         getPurchases: async () => [],
         consumePurchase: async () => undefined,
       }),

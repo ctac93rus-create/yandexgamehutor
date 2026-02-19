@@ -8,7 +8,8 @@ export interface CatalogProduct {
 }
 
 interface PurchaseRecord {
-  id: string;
+  id?: string;
+  productID?: string;
   purchaseToken: string;
 }
 
@@ -46,8 +47,10 @@ export class PurchasesManager {
     }
 
     const catalog = await payments.getCatalog();
-    return catalog.products.map((product) => ({
-      id: String(product.id ?? ''),
+    const products = this.extractCatalogProducts(catalog);
+
+    return products.map((product) => ({
+      id: String(product.productID ?? product.id ?? ''),
       title: typeof product.title === 'string' ? product.title : undefined,
       description: typeof product.description === 'string' ? product.description : undefined,
       price: typeof product.price === 'string' ? product.price : undefined,
@@ -61,7 +64,7 @@ export class PurchasesManager {
     }
 
     const purchase = await payments.purchase({ id: productId });
-    const registration = this.handlers.get(purchase.id);
+    const registration = this.handlers.get(this.getPurchaseProductId(purchase));
     if (!registration) {
       return false;
     }
@@ -71,6 +74,24 @@ export class PurchasesManager {
       await payments.consumePurchase(purchase.purchaseToken);
     }
     return true;
+  }
+
+
+
+  private extractCatalogProducts(catalog: unknown): Array<Record<string, unknown>> {
+    if (Array.isArray(catalog)) {
+      return catalog;
+    }
+
+    if (catalog && typeof catalog === 'object' && Array.isArray((catalog as { products?: unknown }).products)) {
+      return (catalog as { products: Array<Record<string, unknown>> }).products;
+    }
+
+    return [];
+  }
+
+  private getPurchaseProductId(purchase: { productID?: unknown; id?: unknown }): string {
+    return String(purchase.productID ?? purchase.id ?? '');
   }
 
   public async processPendingPurchases(): Promise<number> {
@@ -84,7 +105,7 @@ export class PurchasesManager {
 
     for (let i = 0; i < pending.length; i += 1) {
       const purchase = pending[i];
-      const registration = this.handlers.get(purchase.id);
+      const registration = this.handlers.get(this.getPurchaseProductId(purchase));
       if (!registration) {
         continue;
       }

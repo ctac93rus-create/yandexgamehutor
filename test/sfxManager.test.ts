@@ -78,6 +78,31 @@ describe('SfxManager', () => {
     expect(fakeContext.suspend).toHaveBeenCalledTimes(1);
   });
 
+
+  it('pause x2, resume x2 resumes exactly once on final resume', async () => {
+    const fakeContext = new FakeAudioContext();
+    (globalThis as { AudioContext?: unknown }).AudioContext = vi.fn(() => fakeContext);
+    vi.spyOn(settingsManager, 'getState').mockReturnValue({
+      locale: 'ru',
+      tutorialCompleted: false,
+      sfxEnabled: true,
+    });
+
+    const manager = new SfxManager();
+    manager.unlockFromGesture();
+    await Promise.resolve();
+
+    manager.onGamePause();
+    manager.onGamePause();
+    expect(fakeContext.suspend).toHaveBeenCalledTimes(1);
+
+    manager.onGameResume();
+    expect(fakeContext.resume).toHaveBeenCalledTimes(0);
+
+    manager.onGameResume();
+    expect(fakeContext.resume).toHaveBeenCalledTimes(1);
+  });
+
   it('resumes only if context was running before pause', async () => {
     const fakeContext = new FakeAudioContext();
     (globalThis as { AudioContext?: unknown }).AudioContext = vi.fn(() => fakeContext);
