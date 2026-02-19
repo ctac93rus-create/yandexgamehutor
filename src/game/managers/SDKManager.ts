@@ -11,6 +11,13 @@ export class SDKManager {
   private ysdk: YandexSDK | null = null;
   private initialized = false;
   private loadingReadySent = false;
+  private readonly debugCounters = {
+    loadingReadyCalls: 0,
+    fullscreenShown: 0,
+    rewardedShown: 0,
+  };
+  private mockRewardedOutcome: 'success' | 'cancel' = 'success';
+  private mockEventListeners = new Map<YandexEvent, Set<() => void>>();
 
   public async init(): Promise<void> {
     if (this.initialized) {
@@ -88,6 +95,7 @@ export class SDKManager {
       return Promise.resolve();
     }
 
+    this.debugCounters.fullscreenShown += 1;
     this.ysdk.adv.showFullscreenAdv({ callbacks });
     return Promise.resolve();
   }
@@ -97,6 +105,7 @@ export class SDKManager {
       return Promise.resolve();
     }
 
+    this.debugCounters.rewardedShown += 1;
     this.ysdk.adv.showRewardedVideo({ callbacks });
     return Promise.resolve();
   }
@@ -114,6 +123,10 @@ export class SDKManager {
       return;
     }
 
+    if (!this.mockEventListeners.has(event)) {
+      this.mockEventListeners.set(event, new Set());
+    }
+    this.mockEventListeners.get(event)?.add(callback);
     this.ysdk.on(event, callback);
   }
 
@@ -122,6 +135,7 @@ export class SDKManager {
       return;
     }
 
+    this.mockEventListeners.get(event)?.delete(callback);
     this.ysdk.off(event, callback);
   }
 
@@ -131,11 +145,24 @@ export class SDKManager {
     }
 
     this.loadingReadySent = true;
+    this.debugCounters.loadingReadyCalls += 1;
     this.ysdk.features.LoadingAPI.ready();
   }
 
+  public getDebugCounts(): { loadingReadyCalls: number; fullscreenShown: number; rewardedShown: number } {
+    return { ...this.debugCounters };
+  }
+
+  public emitDebugEvent(event: YandexEvent): void {
+    this.mockEventListeners.get(event)?.forEach((callback) => callback());
+  }
+
+  public setMockRewardedOutcome(outcome: 'success' | 'cancel'): void {
+    this.mockRewardedOutcome = outcome;
+  }
+
   private async createMockSdk(): Promise<YandexSDK> {
-    const listeners = new Map<YandexEvent, Set<() => void>>();
+    const listeners = this.mockEventListeners;
     const playerData: Record<string, unknown> = {};
     const playerStats: Record<string, number> = {};
 
@@ -158,7 +185,9 @@ export class SDKManager {
         },
         showRewardedVideo: ({ callbacks } = {}) => {
           callbacks?.onOpen?.();
-          callbacks?.onRewarded?.();
+          if (this.mockRewardedOutcome === 'success') {
+            callbacks?.onRewarded?.();
+          }
           callbacks?.onClose?.(true);
         },
       },

@@ -12,7 +12,8 @@
     "test": "vitest run",
     "zip": "tsx scripts/zip_dist.ts",
     "format": "prettier . --write",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "smoke:e2e": "tsx scripts/smoke_e2e.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",
